@@ -4,8 +4,8 @@ RUN sed -i 's/# deb-src/deb-src/' /etc/apt/sources.list
 # disable -updates, only building against -security
 RUN sed -i /-updates/d /etc/apt/sources.list
 RUN apt update -y
-RUN DEBIAN_FRONTEND=noninteractive apt install -y devscripts git-buildpackage software-properties-common
-RUN git clone https://github.com/CanonicalLtd/shim-review.git
+RUN DEBIAN_FRONTEND=noninteractive apt install -y devscripts git-buildpackage
+COPY *.efi /shim-review/
 RUN git clone https://git.launchpad.net/~ubuntu-core-dev/shim/+git/shim
 WORKDIR /shim
 RUN apt build-dep -y ./
