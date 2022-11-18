@@ -1,0 +1,37 @@
+name: pull-request
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  podman-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # otherwise we are testing target branch instead of the PR branch (see pull_request_target trigger)
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          DEBIAN_FRONTEND=noninteractive apt install -y podman
+
+      - name: Build amd64
+        id: test-amd64
+        run: |
+          podman build .
+
+      - name: Build arm64
+        id: test-arm64
+        run: |
+          podman build -f Dockerfile.arm64
+
