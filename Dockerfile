@@ -12,7 +12,7 @@ RUN apt build-dep -y ./
 RUN gbp buildpackage -b -us -uc
 WORKDIR /
 RUN DEBIAN_FRONTEND=noninteractive apt install -y pesign
-RUN objcopy /shim/shimx64.efi --dump-section .sbat=/dev/stdout
+RUN objcopy /shim/shimx64.efi unused.efi --dump-section .sbat=/dev/stdout
 RUN pesign -h -i /shim/shimx64.efi
 RUN sha256sum /shim-review/shimx64.efi /shim/shimx64.efi
 RUN hexdump -Cv /shim-review/shimx64.efi > orig
