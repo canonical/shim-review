@@ -304,15 +304,16 @@ No
 -------------------------------------------------------------------------------
 shim, fb, mm:
 
-    sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    shim,3,UEFI shim,shim,1,https://github.com/rhboot/shim
-    shim.ubuntu,1,Ubuntu,shim,15.4-0ubuntu2,https://www.ubuntu.com/
+	sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+	shim,3,UEFI shim,shim,1,https://github.com/rhboot/shim
+	shim.ubuntu,1,Ubuntu,shim,15.7-0ubuntu1,https://www.ubuntu.com/
 
-grub:
 
-    sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    grub,3,Free Software Foundation,grub,2.04,https://www.gnu.org/software/grub/
-    grub.ubuntu,1,Ubuntu,grub2,2.04-1ubuntu45,https://www.ubuntu.com/
+grub: (template)
+
+	sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+	grub,3,Free Software Foundation,grub,@UPSTREAM_VERSION@,https://www.gnu.org/software/grub/
+	grub.ubuntu,1,Ubuntu,grub2,@DEB_VERSION@,https://www.ubuntu.com/
 
 fwupd:
 
@@ -325,8 +326,6 @@ kernel.efi:
     sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
     systemd,1,The systemd Developers,systemd,245,https://www.freedesktop.org/wiki/Software/systemd
     systemd.ubuntu,1,Ubuntu,systemd,245.4-4ubuntu3.6,https://bugs.launchpad.net/ubuntu/
-
-FIXME: Update grub fwupd sbats with real ones.
 
 -------------------------------------------------------------------------------
 ### Which modules are built into your signed grub image?
