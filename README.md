@@ -253,16 +253,21 @@ We are shipping vendor_dbx that includes all previously used certificates.
 ### What OS and toolchain must we use to reproduce this build?  Include where to find it, etc.  We're going to try to reproduce your build as closely as possible to verify that it's really a build of the source tree you tell us it is, so these need to be fairly thorough. At the very least include the specific versions of gcc, binutils, and gnu-efi which were used, and where to find those binaries.
 ### If the shim binaries can't be reproduced using the provided Dockerfile, please explain why that's the case and what the differences would be.
 -------------------------------------------------------------------------------
-Ubuntu 22.10 (kinetic kudo)
- FIXME: binutils (= 2.36.1-6ubuntu1),
- FIXME: gcc-10 (= 10.3.0-1ubuntu1),
- FIXME: libc6-dev (= 2.33-0ubuntu5),
+
+Ubuntu 22.10 (kinetic kudo):
+
+    binutils (= 2.39-3ubuntu1),
+    binutils-aarch64-linux-gnu (= 2.39-3ubuntu1),
+    binutils-common (= 2.39-3ubuntu1),
+    binutils-x86-64-linux-gnu (= 2.39-3ubuntu1),
+    gcc-12 (= 12.2.0-3ubuntu1),
+    gcc-12-base (= 12.2.0-3ubuntu1),
+    gcc (= 4:12.2.0-1ubuntu1),
+    libc6-dev (= 2.36-0ubuntu4),
 
 To build:
 
-Use included Dockerfiles;
-
-arm64 builds are not entirely reproducible, their build id changes.
+Use included Dockerfiles or just check the GitHub workflow which does it for you.
 
 
 -------------------------------------------------------------------------------
@@ -280,7 +285,10 @@ Rebased against 15.7
 -------------------------------------------------------------------------------
 ### What is the SHA256 hash of your final SHIM binary?
 -------------------------------------------------------------------------------
-FIXME: [your text here]
+$ sha256sum shim*.efi
+d02697ef3c6a2a4980e3b2ceedce0fd6591ff10e163fe6f7678553723a366254  shimaa64.efi
+ab1b96c04a3898253c5f8b381cc21e0d03c5e5f674fd102070afefb8469ed8fc  shimx64.efi
+
 
 -------------------------------------------------------------------------------
 ### How do you manage and protect the keys used in your SHIM?
@@ -437,12 +445,14 @@ network grub image:
 Building / Publishing
 https://launchpad.net/ubuntu/+source/grub2-unsigned - same signed grub binaries for all series
 
+currently building next one (first one signed with it in):
+
+https://launchpad.net/~ubuntu-uefi-team/+archive/ubuntu/ppa/+packages
+
 Git managed source code
 https://code.launchpad.net/~ubuntu-core-dev/grub/+git/ubuntu/+ref/ubuntu
 
 Note patches debian/patches
-
-FIXME: latest grub not public yet
 
 -------------------------------------------------------------------------------
 ### If your SHIM launches any other components, please provide further details on what is launched.
