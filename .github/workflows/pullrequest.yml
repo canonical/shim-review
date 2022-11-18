@@ -21,10 +21,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Install build dependencies
-        run: |
-          sudo DEBIAN_FRONTEND=noninteractive apt install -y podman
-
       - name: Build amd64
         id: test-amd64
         run: |
