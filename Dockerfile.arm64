@@ -14,6 +14,6 @@ WORKDIR /
 RUN objcopy /shim/shimaa64.efi unused.efi --dump-section .sbat=/dev/stdout
 RUN pesign -h -i /shim/shimaa64.efi
 RUN sha256sum /shim-review/shimaa64.efi /shim/shimaa64.efi
-ruN hexdump -Cv /shim-review/shimaa64.efi > orig
+RUN hexdump -Cv /shim-review/shimaa64.efi > orig
 RUN hexdump -Cv /shim/shimaa64.efi > build
 RUN diff -u orig build
