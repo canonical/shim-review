@@ -1,14 +1,19 @@
-FROM arm64v8/ubuntu:hirsute
+FROM arm64v8/ubuntu:kinetic
 
 RUN sed -i 's/# deb-src/deb-src/' /etc/apt/sources.list
+# disable -updates, only building against -security
+RUN sed -i /-updates/d /etc/apt/sources.list
 RUN apt update -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y devscripts git-buildpackage software-properties-common
 RUN git clone https://github.com/CanonicalLtd/shim-review.git
 RUN git clone https://git.launchpad.net/~ubuntu-core-dev/shim/+git/shim
 WORKDIR /shim
 RUN apt build-dep -y ./
-RUN gbp buildpackage -us -uc
+RUN gbp buildpackage -b -us -uc
 WORKDIR /
-RUN hexdump -Cv /shim-review/shimaa64.efi > orig
+RUN objcopy /shim/shimaa64.efi --dump-section .sbat=/dev/stdout
+RUN pesign -h -i /shim/shimaa64.efi
+RUN sha256sum /shim-review/shimaa64.efi /shim/shimaa64.efi
+ruN hexdump -Cv /shim-review/shimaa64.efi > orig
 RUN hexdump -Cv /shim/shimaa64.efi > build
 RUN diff -u orig build
