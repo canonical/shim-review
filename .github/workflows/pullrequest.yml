@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  podman-build:
+  amd64:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +25,23 @@ jobs:
         id: test-amd64
         run: |
           podman build .
+
+  arm64:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # otherwise we are testing target branch instead of the PR branch (see pull_request_target trigger)
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install qemu-user-static
+        id: install-qemu
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y qemu-user-static
 
       - name: Build arm64
         id: test-arm64
