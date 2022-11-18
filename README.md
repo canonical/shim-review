@@ -171,6 +171,71 @@ Yes but there are like hundred patches and like 80 different kernels, so it's a 
 much to include here. There's additional secure boot enforcing patches, hardware
 enablement, and zfs is built alongside.
 
+Most interesting things are:
+```
+df8b92624f UBUNTU: SAUCE: (lockdown) security: lockdown: expose a hook to lock the kernel down
+fede732054 UBUNTU: SAUCE: (lockdown) efi: Add an EFI_SECURE_BOOT flag to indicate secure boot mode
+438296a598 UBUNTU: SAUCE: (lockdown) efi: Lock down the kernel if booted in secure boot mode
+03deb74301 UBUNTU: SAUCE: (lockdown) s390: Lock down the kernel when the IPL secure flag is set
+c2952ca438 UBUNTU: SAUCE: (lockdown) KEYS: Make use of platform keyring for module signature verify
+9ba951d4e7 UBUNTU: SAUCE: (lockdown) arm64: Allow locking down the kernel under EFI secure boot
+01f96e4abc UBUNTU: SAUCE: (lockdown) security: lockdown: Make CONFIG_LOCK_DOWN_IN_EFI_SECURE_BOOT more generic
+59a69f2418 UBUNTU: SAUCE: (lockdown) powerpc: lock down kernel in secure boot mode
+0db545033f UBUNTU: SAUCE: integrity: Load mokx certs from the EFI MOK config table
+7482fcc79c UBUNTU: SAUCE: integrity: add informational messages when revoking certs
+9075b83ae9 UBUNTU: [Packaging] Revoke 2012 UEFI signing certificate as built-in
+```
+
+The above ensure that lockdown is enforced when booted with
+secureboot, MOKX keys are imported into kernel .blacklist keyring, and
+thus revoked kernels are prohibited from kexec/kdump.
+
+
+Notable features of our config options:
+
+```
+CONFIG_MODULE_SIG=y
+CONFIG_MODULE_SIG_ALL=y
+# CONFIG_MODULE_SIG_FORCE is not set
+CONFIG_MODULE_SIG_FORMAT=y
+CONFIG_MODULE_SIG_HASH="sha512"
+CONFIG_MODULE_SIG_KEY="certs/signing_key.pem"
+CONFIG_MODULE_SIG_KEY_TYPE_RSA=y
+CONFIG_MODULE_SIG_SHA512=y
+CONFIG_SYSTEM_REVOCATION_KEYS="debian/canonical-revoked-certs.pem"
+CONFIG_SYSTEM_TRUSTED_KEYS="debian/canonical-certs.pem"
+```
+
+The above settings ensure that all drivers are signed with built-time
+ephemeral signing key. In addition, we trust livepatch & 3rd-party
+driver signing key for signing modules post kernel build.
+
+Drivers signed with built-in kernel signing key:
+
+ * `CONFIG_STAGING=y` that are listed in
+   `./drivers/staging/signature-inclusion`, currently exfat, realtek
+   wifi drivers only. NB! most importantly android ashmem/binder are
+   _not_ signed
+
+ * Vendored at build-time dkms modules listed in
+   `debian/dkms-versions`, currently these are `zfs-linux`,
+   `v4l2loopback`, `backport-iwlwifi-dkms` for ZFS, webcam and wifi
+   support.
+
+Drivers signed with `SYSTEM_TRUSTED_KEYS`:
+
+ * Canonical Livepatch Service modules for livepatching security vulnerabilities
+
+ * Detached reproducible builds NVIDIA proprietary driver signatures
+
+Certificates present in `CONFIG_SYSTEM_REVOCATION_KEYS`:
+
+ * The certificates in `CONFIG_SYSTEM_REVOCATION_KEYS` are the same as
+   shim's `VENDOR_DBX` discussed below. This is to ensure that kernel
+   prohibits kexec/kdump of kernels that are distrusted by the shim to
+   boot. This works, even if MOKX mirroring facility fails at runtime,
+   due to shim/platform deficiencies.
+
 -------------------------------------------------------------------------------
 ### If you use vendor_db functionality of providing multiple certificates and/or hashes please briefly describe your certificate setup.
 ### If there are allow-listed hashes please provide exact binaries for which hashes are created via file sharing service, available in public with anonymous access for verification.
@@ -252,12 +317,14 @@ grub:
 fwupd:
 
     sbat,1,UEFI shim,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    fwupd,1,Firmware update daemon,fwupd,1.5.8,https://github.com/fwupd/fwupd
-    fwupd.ubuntu,1,Ubuntu,fwupd,1.5.8-0ubuntu1,https://launchpad.net/ubuntu/+source/fwupd
+    fwupd,1,Firmware update daemon,fwupd,1.5.11,https://github.com/fwupd/fwupd
+    fwupd.ubuntu,1,Ubuntu,fwupd,1.5.11-0ubuntu2,https://launchpad.net/ubuntu/+source/fwupd
 
 kernel.efi:
 
-	FIXME: add kernel.efi stub
+    sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+    systemd,1,The systemd Developers,systemd,245,https://www.freedesktop.org/wiki/Software/systemd
+    systemd.ubuntu,1,Ubuntu,systemd,245.4-4ubuntu3.6,https://bugs.launchpad.net/ubuntu/
 
 FIXME: Update grub fwupd sbats with real ones.
 
