@@ -38,7 +38,7 @@ We're a well-known Linux distro
 *******************************************************************************
 ### Why are you unable to reuse shim from another distro that is already signed?
 *******************************************************************************
-We are big distro with ton of custom grub patches.
+We are big distro with many custom grub patches.
 
 *******************************************************************************
 ### Who is the primary contact for security updates, etc.?
@@ -59,11 +59,17 @@ well known in the Linux community.)
 *******************************************************************************
 ### Who is the secondary contact for security updates, etc.?
 *******************************************************************************
+Secondary contact 1:
 - Name: dann frazier
 - Position: engineer
 - Email address: dannf@ubuntu.com
-- PGP key: dannf.pub
 - PGP key fingerprint: 09F4 7DBF 2D32 EEDC 2443  EBEE 1BF8 3C5E 54FC 8640
+
+Secondary contact 2:
+- Name: Mate Kukri
+- Position: Software Engineer
+- Email address: mate.kukri@canonical.com
+- PGP key fingerprint: 9850 FD0C 92D5 2276 794E  4595 5243 F6D8 1246 00EC
 
 (Key should be signed by the other security contacts, pushed to a keyserver
 like keyserver.ubuntu.com, and preferably have signatures that are reasonably
@@ -76,12 +82,12 @@ Please create your shim binaries starting with the 15.8 shim release tar file: h
 This matches https://github.com/rhboot/shim/releases/tag/15.8 and contains the appropriate gnu-efi source.
 
 *******************************************************************************
-The shim-15.7.tar.bz2 is used as the original tarball.
+The shim-15.8.tar.bz2 is used as the original tarball.
 
 *******************************************************************************
 ### URL for a repo that contains the exact code which was built to get this binary:
 *******************************************************************************
-https://code.launchpad.net/~ubuntu-core-dev/shim/+git/shim/+ref/master
+https://code.launchpad.net/~ubuntu-uefi-team/+git/shim/+ref/master
 
 *******************************************************************************
 ### What patches are being applied and why:
@@ -98,7 +104,8 @@ No new patches.
 *******************************************************************************
 ### If shim is loading GRUB2 bootloader what exact implementation of Secureboot in GRUB2 do you have? (Either Upstream GRUB2 shim_lock verifier or Downstream RHEL/Fedora/Debian/Canonical-like implementation)
 *******************************************************************************
-2.06 with lockdown backports, shim_lock, with rhboot/linuxefi/Canonical like implementation.
+- 2.06 with lockdown backports, shim_lock, with rhboot/linuxefi/Canonical like implementation.
+- 2.12 with PE verification via shim and loading via "peimage.mod" loader
 
 *******************************************************************************
 ### If shim is loading GRUB2 bootloader and your previously released shim booted a version of GRUB2 affected by any of the CVEs in the July 2020, the March 2021, the June 7th 2022, the November 15th 2022, or 3rd of October 2023 GRUB2 CVE list, have fixes for all these CVEs been applied?
@@ -250,7 +257,7 @@ Certificates present in `CONFIG_SYSTEM_REVOCATION_KEYS`:
 ### Do you use an ephemeral key for signing kernel modules?
 ### If not, please describe how you ensure that one kernel build does not load modules built for another kernel.
 *******************************************************************************
-[your text here]
+Yes.
 
 *******************************************************************************
 ### If you use vendor_db functionality of providing multiple certificates and/or hashes please briefly describe your certificate setup.
@@ -268,16 +275,16 @@ We are shipping vendor_dbx that includes all previously used certificates.
 ### What OS and toolchain must we use to reproduce this build?  Include where to find it, etc.  We're going to try to reproduce your build as closely as possible to verify that it's really a build of the source tree you tell us it is, so these need to be fairly thorough. At the very least include the specific versions of gcc, binutils, and gnu-efi which were used, and where to find those binaries.
 ### If the shim binaries can't be reproduced using the provided Dockerfile, please explain why that's the case and what the differences would be.
 *******************************************************************************
-Ubuntu 22.10 (kinetic kudo):
+Ubuntu 23.10 (Mantic Minotaur):
 
-    binutils (= 2.39-3ubuntu1),
-    binutils-aarch64-linux-gnu (= 2.39-3ubuntu1),
-    binutils-common (= 2.39-3ubuntu1),
-    binutils-x86-64-linux-gnu (= 2.39-3ubuntu1),
-    gcc-12 (= 12.2.0-3ubuntu1),
-    gcc-12-base (= 12.2.0-3ubuntu1),
-    gcc (= 4:12.2.0-1ubuntu1),
-    libc6-dev (= 2.36-0ubuntu4),
+    binutils (= 2.41-5ubuntu1),
+    binutils-aarch64-linux-gnu (= 2.41-5ubuntu1),
+    binutils-common (= 2.41-5ubuntu1),
+    binutils-x86-64-linux-gnu (= 2.41-5ubuntu1),
+    gcc-13 (= 13.2.0-4ubuntu3),
+    gcc-13-base (= 13.2.0-4ubuntu3),
+    gcc (= 4:13.2.0-1ubuntu1),
+    libc6-dev (= 2.38-1ubuntu6),
 
 To build:
 
@@ -287,20 +294,21 @@ Use included Dockerfiles or just check the GitHub workflow which does it for you
 ### Which files in this repo are the logs for your build?
 This should include logs for creating the buildroots, applying patches, doing the build, creating the archives, etc.
 *******************************************************************************
-The .log files
+The `buildlog_*` files
 
 *******************************************************************************
 ### What changes were made in the distor's secure boot chain since your SHIM was last signed?
 For example, signing new kernel's variants, UKI, systemd-boot, new certs, new CA, etc..
 *******************************************************************************
-Rebased against 15.7
+Rebased against 15.8
 
 *******************************************************************************
 ### What is the SHA256 hash of your final SHIM binary?
 *******************************************************************************
-$ sha256sum shim*.efi
-d02697ef3c6a2a4980e3b2ceedce0fd6591ff10e163fe6f7678553723a366254  shimaa64.efi
-ab1b96c04a3898253c5f8b381cc21e0d03c5e5f674fd102070afefb8469ed8fc  shimx64.efi
+
+    $ sha256sum shim*.efi
+    21d895284c1783b4e3d82584bc4aca197204f385f0da2192e2222e501ed9cc1b  shimaa64.efi
+    39037872a0bb357a0f40c5e3ce6a1757b5b54c78c31f8d5da01169c2ca94b3a7  shimx64.efi
 
 *******************************************************************************
 ### How do you manage and protect the keys used in your SHIM?
@@ -330,26 +338,27 @@ and only append your own. More information on how SBAT works can be found
 shim, fb, mm:
 
     sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    shim,3,UEFI shim,shim,1,https://github.com/rhboot/shim
-    shim.ubuntu,1,Ubuntu,shim,15.7-0ubuntu1,https://www.ubuntu.com/
+    shim,4,UEFI shim,shim,1,https://github.com/rhboot/shim
+    shim.ubuntu,1,Ubuntu,shim,15.8-0ubuntu1,https://www.ubuntu.com/
 
 grub: (template)
 
     sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    grub,3,Free Software Foundation,grub,@UPSTREAM_VERSION@,https://www.gnu.org/software/grub/
+    grub,4,Free Software Foundation,grub,@UPSTREAM_VERSION@,https://www.gnu.org/software/grub/
     grub.ubuntu,1,Ubuntu,grub2,@DEB_VERSION@,https://www.ubuntu.com/
+    grub.peimage,1,Canonical,grub2,@DEB_VERSION@,https://salsa.debian.org/grub-team/grub/-/blob/master/debian/patches/secure-boot/efi-use-peimage-shim.patch
 
 fwupd:
 
     sbat,1,UEFI shim,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    fwupd,1,Firmware update daemon,fwupd,1.5.11,https://github.com/fwupd/fwupd
-    fwupd.ubuntu,1,Ubuntu,fwupd,1.5.11-0ubuntu2,https://launchpad.net/ubuntu/+source/fwupd
+    fwupd,1,Firmware update daemon,fwupd,1.9.5,https://github.com/fwupd/fwupd
+    fwupd.ubuntu,1,Ubuntu,fwupd,1.9.5-1,https://launchpad.net/ubuntu/+source/fwupd
 
 kernel.efi:
 
     sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    systemd,1,The systemd Developers,systemd,245,https://www.freedesktop.org/wiki/Software/systemd
-    systemd.ubuntu,1,Ubuntu,systemd,245.4-4ubuntu3.6,https://bugs.launchpad.net/ubuntu/
+    systemd,1,The systemd Developers,systemd,253,https://www.freedesktop.org/wiki/Software/systemd
+    systemd.ubuntu,1,Ubuntu,systemd,253.5-1ubuntu6.1,https://bugs.launchpad.net/ubuntu/
 
 
 *******************************************************************************
@@ -463,7 +472,7 @@ network grub image:
 *******************************************************************************
 ### If you are using systemd-boot on arm64 or riscv, is the fix for [unverified Devicetree Blob loading](https://github.com/systemd/systemd/security/advisories/GHSA-6m6p-rjcq-334c) included?
 *******************************************************************************
-[your text here]
+We only use systemd-stub, not systemd-boot.
 
 *******************************************************************************
 ### What is the origin and full version number of your bootloader (GRUB2 or systemd-boot or other)?
@@ -473,7 +482,7 @@ https://launchpad.net/ubuntu/+source/grub2-unsigned - same signed grub binaries 
 
 currently building next one (first one signed with it in):
 
-https://launchpad.net/~ubuntu-uefi-team/+archive/ubuntu/ppa/+packages
+https://launchpad.net/~ubuntu-uefi-team/+archive/ubuntu/build/+packages
 
 Git managed source code
 https://code.launchpad.net/~ubuntu-core-dev/grub/+git/ubuntu/+ref/ubuntu
@@ -505,8 +514,7 @@ Our kernels also check MokListXRT for revocations for kexec.
 *******************************************************************************
 ### Does your SHIM load any loaders that support loading unsigned kernels (e.g. GRUB2)?
 *******************************************************************************
-No, our grub enforces lockdown & uses shim protocol (rhboot linuxefi
-sb patches) to verify next component.
+No, our grub enforces lockdown & uses shim protocol to verify next component.
 
 *******************************************************************************
 ### What kernel are you using? Which patches does it includes to enforce Secure Boot?
@@ -543,3 +551,7 @@ finds as the changelog states:
 - we have disabled the unacceptable 5s boot delay in fallback when
   TPM is present, as it impacts bootspeed for the noninteractive
   cloud instances that have vTPM & SecureBoot.
+
+- our revocation policy is as follows:
+  + Automatic SbatLevel applied by shim itself: `shim,2\ngrub,3\ngrub.debian,4\n`
+  + We do not use revocations.efi.
