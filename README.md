@@ -11,9 +11,12 @@ This repo is for review of requests for signing shim.  To create a request for r
 - file an issue at https://github.com/rhboot/shim-review/issues with a link to your tag
 - approval is ready when the "accepted" label is added to your issue
 
-Note that we really only have experience with using GRUB2 on Linux, so asking
-us to endorse anything else for signing is going to require some convincing on
+Note that we really only have experience with using GRUB2 or systemd-boot on Linux, so
+asking us to endorse anything else for signing is going to require some convincing on
 your part.
+
+Check the docs directory in this repo for guidance on submission and
+getting your shim signed.
 
 Here's the template:
 
@@ -67,10 +70,10 @@ like keyserver.ubuntu.com, and preferably have signatures that are reasonably
 well known in the Linux community.)
 
 *******************************************************************************
-### Were these binaries created from the 15.7 shim release tar?
-Please create your shim binaries starting with the 15.7 shim release tar file: https://github.com/rhboot/shim/releases/download/15.7/shim-15.7.tar.bz2
+### Were these binaries created from the 15.8 shim release tar?
+Please create your shim binaries starting with the 15.8 shim release tar file: https://github.com/rhboot/shim/releases/download/15.8/shim-15.8.tar.bz2
 
-This matches https://github.com/rhboot/shim/releases/tag/15.7 and contains the appropriate gnu-efi source.
+This matches https://github.com/rhboot/shim/releases/tag/15.8 and contains the appropriate gnu-efi source.
 
 *******************************************************************************
 The shim-15.7.tar.bz2 is used as the original tarball.
@@ -83,7 +86,6 @@ https://code.launchpad.net/~ubuntu-core-dev/shim/+git/shim/+ref/master
 *******************************************************************************
 ### What patches are being applied and why:
 *******************************************************************************
-
 Patches included also previous submission:
 
  * debian/patches/ubuntu-no-addend-vendor-dbx.patch: Stop addending the vendor
@@ -99,43 +101,56 @@ No new patches.
 2.06 with lockdown backports, shim_lock, with rhboot/linuxefi/Canonical like implementation.
 
 *******************************************************************************
-### If shim is loading GRUB2 bootloader and your previously released shim booted a version of grub affected by any of the CVEs in the July 2020 grub2 CVE list, the March 2021 grub2 CVE list, the June 7th 2022 grub2 CVE list, or the November 15th 2022 list, have fixes for all these CVEs been applied?
+### If shim is loading GRUB2 bootloader and your previously released shim booted a version of GRUB2 affected by any of the CVEs in the July 2020, the March 2021, the June 7th 2022, the November 15th 2022, or 3rd of October 2023 GRUB2 CVE list, have fixes for all these CVEs been applied?
 
-* CVE-2020-14372
-* CVE-2020-25632
-* CVE-2020-25647
-* CVE-2020-27749
-* CVE-2020-27779
-* CVE-2021-20225
-* CVE-2021-20233
-* CVE-2020-10713
-* CVE-2020-14308
-* CVE-2020-14309
-* CVE-2020-14310
-* CVE-2020-14311
-* CVE-2020-15705
-* CVE-2021-3418 (if you are shipping the shim_lock module)
-
-* CVE-2021-3695
-* CVE-2021-3696
-* CVE-2021-3697
-* CVE-2022-28733
-* CVE-2022-28734
-* CVE-2022-28735
-* CVE-2022-28736
-* CVE-2022-28737
-
-* CVE-2022-2601
-* CVE-2022-3775
+* 2020 July - BootHole
+  * Details: https://lists.gnu.org/archive/html/grub-devel/2020-07/msg00034.html
+  * CVE-2020-10713
+  * CVE-2020-14308
+  * CVE-2020-14309
+  * CVE-2020-14310
+  * CVE-2020-14311
+  * CVE-2020-15705
+  * CVE-2020-15706
+  * CVE-2020-15707
+* March 2021
+  * Details: https://lists.gnu.org/archive/html/grub-devel/2021-03/msg00007.html
+  * CVE-2020-14372
+  * CVE-2020-25632
+  * CVE-2020-25647
+  * CVE-2020-27749
+  * CVE-2020-27779
+  * CVE-2021-3418 (if you are shipping the shim_lock module)
+  * CVE-2021-20225
+  * CVE-2021-20233
+* June 2022
+  * Details: https://lists.gnu.org/archive/html/grub-devel/2022-06/msg00035.html, SBAT increase to 2
+  * CVE-2021-3695
+  * CVE-2021-3696
+  * CVE-2021-3697
+  * CVE-2022-28733
+  * CVE-2022-28734
+  * CVE-2022-28735
+  * CVE-2022-28736
+  * CVE-2022-28737
+* November 2022
+  * Details: https://lists.gnu.org/archive/html/grub-devel/2022-11/msg00059.html, SBAT increase to 3
+  * CVE-2022-2601
+  * CVE-2022-3775
+* October 2023 - NTFS vulnerabilities
+  * Details: https://lists.gnu.org/archive/html/grub-devel/2023-10/msg00028.html, SBAT increase to 4
+  * CVE-2023-4693
+  * CVE-2023-4692
 *******************************************************************************
 Yes.
 
 *******************************************************************************
-### If these fixes have been applied, have you set the global SBAT generation on your GRUB binary to 3?
+### If shim is loading GRUB2 bootloader, and if these fixes have been applied, is the upstream global SBAT generation in your GRUB2 binary set to 4?
+The entry should look similar to: `grub,4,Free Software Foundation,grub,GRUB_UPSTREAM_VERSION,https://www.gnu.org/software/grub/`
 *******************************************************************************
-
 Yes.
 
+*******************************************************************************
 ### Were old shims hashes provided to Microsoft for verification and to be added to future DBX updates?
 ### Does your new chain of trust disallow booting old GRUB2 builds affected by the CVEs?
 *******************************************************************************
@@ -153,7 +168,6 @@ Pre-SBAT shim was revoked in dbx update
 ### Is upstream commit [75b0cea7bf307f362057cc778efe89af4c615354 "ACPI: configfs: Disallow loading ACPI tables when locked down"](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=75b0cea7bf307f362057cc778efe89af4c615354) applied?
 ### Is upstream commit [eadb2f47a3ced5c64b23b90fd2a3463f63726066 "lockdown: also lock down previous kgdb use"](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=eadb2f47a3ced5c64b23b90fd2a3463f63726066) applied?
 *******************************************************************************
-
 All Ubuntu kernels in all currently supported series have the above
 applied.
 
@@ -163,7 +177,6 @@ cert being revoked in vendor dbx.
 *******************************************************************************
 ### Do you build your signed kernel with additional local patches? What do they do?
 *******************************************************************************
-
 Yes but there are like hundred patches and like 80 different kernels, so it's a bit
 much to include here. There's additional secure boot enforcing patches, hardware
 enablement, and zfs is built alongside.
@@ -234,6 +247,12 @@ Certificates present in `CONFIG_SYSTEM_REVOCATION_KEYS`:
    due to shim/platform deficiencies.
 
 *******************************************************************************
+### Do you use an ephemeral key for signing kernel modules?
+### If not, please describe how you ensure that one kernel build does not load modules built for another kernel.
+*******************************************************************************
+[your text here]
+
+*******************************************************************************
 ### If you use vendor_db functionality of providing multiple certificates and/or hashes please briefly describe your certificate setup.
 ### If there are allow-listed hashes please provide exact binaries for which hashes are created via file sharing service, available in public with anonymous access for verification.
 *******************************************************************************
@@ -245,12 +264,10 @@ VENDOR_DB is not used.
 *******************************************************************************
 We are shipping vendor_dbx that includes all previously used certificates.
 
-
 *******************************************************************************
 ### What OS and toolchain must we use to reproduce this build?  Include where to find it, etc.  We're going to try to reproduce your build as closely as possible to verify that it's really a build of the source tree you tell us it is, so these need to be fairly thorough. At the very least include the specific versions of gcc, binutils, and gnu-efi which were used, and where to find those binaries.
 ### If the shim binaries can't be reproduced using the provided Dockerfile, please explain why that's the case and what the differences would be.
 *******************************************************************************
-
 Ubuntu 22.10 (kinetic kudo):
 
     binutils (= 2.39-3ubuntu1),
@@ -266,7 +283,6 @@ To build:
 
 Use included Dockerfiles or just check the GitHub workflow which does it for you.
 
-
 *******************************************************************************
 ### Which files in this repo are the logs for your build?
 This should include logs for creating the buildroots, applying patches, doing the build, creating the archives, etc.
@@ -274,7 +290,8 @@ This should include logs for creating the buildroots, applying patches, doing th
 The .log files
 
 *******************************************************************************
-### What changes were made since your SHIM was last signed?
+### What changes were made in the distor's secure boot chain since your SHIM was last signed?
+For example, signing new kernel's variants, UKI, systemd-boot, new certs, new CA, etc..
 *******************************************************************************
 Rebased against 15.7
 
@@ -284,7 +301,6 @@ Rebased against 15.7
 $ sha256sum shim*.efi
 d02697ef3c6a2a4980e3b2ceedce0fd6591ff10e163fe6f7678553723a366254  shimaa64.efi
 ab1b96c04a3898253c5f8b381cc21e0d03c5e5f674fd102070afefb8469ed8fc  shimx64.efi
-
 
 *******************************************************************************
 ### How do you manage and protect the keys used in your SHIM?
@@ -302,22 +318,26 @@ and issue new certificates.
 No
 
 *******************************************************************************
-### Do you add a vendor-specific SBAT entry to the SBAT section in each binary that supports SBAT metadata ( grub2, fwupd, fwupdate, shim + all child shim binaries )?
+### Do you add a vendor-specific SBAT entry to the SBAT section in each binary that supports SBAT metadata ( GRUB2, fwupd, fwupdate, systemd-boot, systemd-stub, shim + all child shim binaries )?
 ### Please provide exact SBAT entries for all SBAT binaries you are booting or planning to boot directly through shim.
 ### Where your code is only slightly modified from an upstream vendor's, please also preserve their SBAT entries to simplify revocation.
+If you are using a downstream implementation of GRUB2 or systemd-boot (e.g.
+from Fedora or Debian), please preserve the SBAT entry from those distributions
+and only append your own. More information on how SBAT works can be found
+[here](https://github.com/rhboot/shim/blob/main/SBAT.md).
 *******************************************************************************
+
 shim, fb, mm:
 
-	sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-	shim,3,UEFI shim,shim,1,https://github.com/rhboot/shim
-	shim.ubuntu,1,Ubuntu,shim,15.7-0ubuntu1,https://www.ubuntu.com/
-
+    sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+    shim,3,UEFI shim,shim,1,https://github.com/rhboot/shim
+    shim.ubuntu,1,Ubuntu,shim,15.7-0ubuntu1,https://www.ubuntu.com/
 
 grub: (template)
 
-	sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-	grub,3,Free Software Foundation,grub,@UPSTREAM_VERSION@,https://www.gnu.org/software/grub/
-	grub.ubuntu,1,Ubuntu,grub2,@DEB_VERSION@,https://www.ubuntu.com/
+    sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+    grub,3,Free Software Foundation,grub,@UPSTREAM_VERSION@,https://www.gnu.org/software/grub/
+    grub.ubuntu,1,Ubuntu,grub2,@DEB_VERSION@,https://www.ubuntu.com/
 
 fwupd:
 
@@ -331,112 +351,122 @@ kernel.efi:
     systemd,1,The systemd Developers,systemd,245,https://www.freedesktop.org/wiki/Software/systemd
     systemd.ubuntu,1,Ubuntu,systemd,245.4-4ubuntu3.6,https://bugs.launchpad.net/ubuntu/
 
+
 *******************************************************************************
-### Which modules are built into your signed grub image?
+### If shim is loading GRUB2 bootloader, which modules are built into your signed GRUB2 image?
 *******************************************************************************
+
 basic:
-	all_video
-	boot
-	btrfs
-	cat
-	chain
-	configfile
-	echo
-	efifwsetup
-	efinet
-	ext2
-	fat
-	font
-	gettext
-	gfxmenu
-	gfxterm
-	gfxterm_background
-	gzio
-	halt
-	help
-	hfsplus
-	iso9660
-	jpeg
-	keystatus
-	loadenv
-	loopback
-	linux
-	ls
-	lsefi
-	lsefimmap
-	lsefisystab
-	lssal
-	memdisk
-	minicmd
-	normal
-	ntfs
-	part_apple
-	part_msdos
-	part_gpt
-	password_pbkdf2
-	png
-	probe
-	reboot
-	regexp
-	search
-	search_fs_uuid
-	search_fs_file
-	search_label
-	sleep
-	smbios
-	squash4
-	test
-	true
-	video
-	xfs
-	zfs
-	zfscrypt
-	zfsinfo
-	"
+
+    all_video
+    boot
+    btrfs
+    cat
+    chain
+    configfile
+    echo
+    efifwsetup
+    efinet
+    ext2
+    fat
+    font
+    gettext
+    gfxmenu
+    gfxterm
+    gfxterm_background
+    gzio
+    halt
+    help
+    hfsplus
+    iso9660
+    jpeg
+    keystatus
+    loadenv
+    loopback
+    linux
+    ls
+    lsefi
+    lsefimmap
+    lsefisystab
+    lssal
+    memdisk
+    minicmd
+    normal
+    ntfs
+    part_apple
+    part_msdos
+    part_gpt
+    password_pbkdf2
+    png
+    probe
+    reboot
+    regexp
+    search
+    search_fs_uuid
+    search_fs_file
+    search_label
+    sleep
+    smbios
+    squash4
+    test
+    true
+    video
+    xfs
+    zfs
+    zfscrypt
+    zfsinfo
 
 amd64-only:
-	cpuid
-	linuxefi
-	play
-	tpm
+
+    cpuid
+    linuxefi
+    play
+    tpm
 
 installed grub:
+
     cryptodisk
-	gcry_arcfour
-	gcry_blowfish
-	gcry_camellia
-	gcry_cast5
-	gcry_crc
-	gcry_des
-	gcry_dsa
-	gcry_idea
-	gcry_md4
-	gcry_md5
-	gcry_rfc2268
-	gcry_rijndael
-	gcry_rmd160
-	gcry_rsa
-	gcry_seed
-	gcry_serpent
-	gcry_sha1
-	gcry_sha256
-	gcry_sha512
-	gcry_tiger
-	gcry_twofish
-	gcry_whirlpool
-	luks
-	lvm
-	mdraid09
-	mdraid1x
-	raid5rec
-	raid6rec
+    gcry_arcfour
+    gcry_blowfish
+    gcry_camellia
+    gcry_cast5
+    gcry_crc
+    gcry_des
+    gcry_dsa
+    gcry_idea
+    gcry_md4
+    gcry_md5
+    gcry_rfc2268
+    gcry_rijndael
+    gcry_rmd160
+    gcry_rsa
+    gcry_seed
+    gcry_serpent
+    gcry_sha1
+    gcry_sha256
+    gcry_sha512
+    gcry_tiger
+    gcry_twofish
+    gcry_whirlpool
+    luks
+    lvm
+    mdraid09
+    mdraid1x
+    raid5rec
+    raid6rec
 
 network grub image:
-	http
-	tftp
+
+    http
+    tftp
 
 *******************************************************************************
-### What is the origin and full version number of your bootloader (GRUB or other)?
+### If you are using systemd-boot on arm64 or riscv, is the fix for [unverified Devicetree Blob loading](https://github.com/systemd/systemd/security/advisories/GHSA-6m6p-rjcq-334c) included?
+*******************************************************************************
+[your text here]
+
+*******************************************************************************
+### What is the origin and full version number of your bootloader (GRUB2 or systemd-boot or other)?
 *******************************************************************************
 Building / Publishing
 https://launchpad.net/ubuntu/+source/grub2-unsigned - same signed grub binaries for all series
@@ -458,9 +488,8 @@ into a single binary.
 
 fwupd of course.
 
-
 *******************************************************************************
-### If your GRUB2 launches any other binaries that are not the Linux kernel in SecureBoot mode, please provide further details on what is launched and how it enforces Secureboot lockdown.
+### If your GRUB2 or systemd-boot launches any other binaries that are not the Linux kernel in SecureBoot mode, please provide further details on what is launched and how it enforces Secureboot lockdown.
 *******************************************************************************
 GRUB2 may launch Windows Bootmgr on dual boot systems.
 Nebooted shim+grub2 may chainloader load shim+grub2 again from disk,
@@ -474,7 +503,7 @@ fwupd verifies capsule signatures; kernel implements lockdown.
 Our kernels also check MokListXRT for revocations for kexec.
 
 *******************************************************************************
-### Does your SHIM load any loaders that support loading unsigned kernels (e.g. GRUB)?
+### Does your SHIM load any loaders that support loading unsigned kernels (e.g. GRUB2)?
 *******************************************************************************
 No, our grub enforces lockdown & uses shim protocol (rhboot linuxefi
 sb patches) to verify next component.
@@ -489,7 +518,6 @@ kernel module signatures under lockdown.
 *******************************************************************************
 ### Add any additional information you think we may need to validate this shim.
 *******************************************************************************
-
 VENDOR_DBX file is included as canonical-dbx-20221103.esl
 One can unpack them using `sig-list-to-certs` utility, and
 finds as the changelog states:
