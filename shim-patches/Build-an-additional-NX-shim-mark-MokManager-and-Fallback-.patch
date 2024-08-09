@@ -1,0 +1,115 @@
+From: Mate Kukri <mate.kukri@canonical.com>
+Date: Tue, 4 Jun 2024 14:44:10 +0100
+Subject: Build an additional NX shim,
+ mark MokManager and Fallback as NX_COMPAT
+
+* As part of the NX rollout, two shims will be-built:
+  - shimARCH.efi: Does not set NX_COMPAT, that defaults MokPolicy to 0
+  - shimARCH.nx.efi: Sets NX_COMPAT, defaults MokPolicy to MOK_POLICY_REQUIRE_NX
+* MokManager and Fallback will both have NX_COMPAT set now
+  - This will allow the same MokManager and Fallback to be used with
+    both shims
+---
+ Make.defaults |  2 ++
+ Makefile      | 13 +++++++++++--
+ globals.c     |  5 ++++-
+ globals_nx.c  |  2 ++
+ 4 files changed, 19 insertions(+), 3 deletions(-)
+ create mode 100644 globals_nx.c
+
+diff --git a/Make.defaults b/Make.defaults
+index e75cd3c..0f46785 100644
+--- a/Make.defaults
++++ b/Make.defaults
+@@ -173,6 +173,8 @@ SHIMSTEM	?= shim$(ARCH_SUFFIX)
+ SHIMNAME	= $(SHIMSTEM).efi
+ SHIMSONAME	= $(SHIMSTEM).so
+ SHIMHASHNAME	= $(SHIMSTEM).hash
++SHIMNXNAME	= $(SHIMSTEM).nx.efi
++SHIMNXSONAME	= $(SHIMSTEM).nx.so
+ BOOTEFINAME	?= BOOT$(ARCH_SUFFIX_UPPER).EFI
+ BOOTCSVNAME	?= BOOT$(ARCH_SUFFIX_UPPER).CSV
+ 
+diff --git a/Makefile b/Makefile
+index 8283d56..44f3ac6 100644
+--- a/Makefile
++++ b/Makefile
+@@ -24,8 +24,8 @@ include $(TOPDIR)/include/coverity.mk
+ include $(TOPDIR)/include/scan-build.mk
+ include $(TOPDIR)/include/fanalyzer.mk
+ 
+-TARGETS	= $(SHIMNAME)
+-TARGETS += $(SHIMNAME).debug $(MMNAME).debug $(FBNAME).debug
++TARGETS	= $(SHIMNAME) $(SHIMNXNAME)
++TARGETS += $(SHIMNAME).debug $(SHIMNXNAME).debug $(MMNAME).debug $(FBNAME).debug
+ ifneq ($(origin ENABLE_SHIM_HASH),undefined)
+ TARGETS += $(SHIMHASHNAME)
+ endif
+@@ -39,6 +39,7 @@ else
+ TARGETS += $(MMNAME) $(FBNAME)
+ endif
+ OBJS	= shim.o globals.o mok.o netboot.o cert.o replacements.o tpm.o version.o errlog.o sbat.o sbat_data.o sbat_var.o pe.o pe-relocate.o httpboot.o csv.o load-options.o
++OBJS_NX	= shim.o globals_nx.o mok.o netboot.o cert.o replacements.o tpm.o version.o errlog.o sbat.o sbat_data.o sbat_var.o pe.o pe-relocate.o httpboot.o csv.o load-options.o
+ KEYS	= shim_cert.h ocsp.* ca.* shim.crt shim.csr shim.p12 shim.pem shim.key shim.cer
+ ORIG_SOURCES	= shim.c globals.c mok.c netboot.c replacements.c tpm.c errlog.c sbat.c pe.c pe-relocate.c httpboot.c shim.h version.h $(wildcard include/*.h) cert.S sbat_var.S
+ MOK_OBJS = MokManager.o PasswordCrypt.o crypt_blowfish.o errlog.o sbat_data.o globals.o
+@@ -130,6 +131,7 @@ sbat_data.o : /dev/null
+ 	$(foreach vs,$(VENDOR_SBATS),$(call add-vendor-sbat,$(vs),$@))
+ 
+ $(SHIMNAME) : $(SHIMSONAME) post-process-pe
++$(SHIMNXNAME) : $(SHIMNXSONAME) post-process-pe
+ $(MMNAME) : $(MMSONAME) post-process-pe
+ $(FBNAME) : $(FBSONAME) post-process-pe
+ $(SHIMNAME) $(MMNAME) $(FBNAME) : | post-process-pe
+@@ -143,6 +145,9 @@ LIBS = Cryptlib/libcryptlib.a \
+ $(SHIMSONAME): $(OBJS) $(LIBS)
+ 	$(LD) -o $@ $(LDFLAGS) $^ $(EFI_LIBS) lib/lib.a
+ 
++$(SHIMNXSONAME): $(OBJS_NX) $(LIBS)
++	$(LD) -o $@ $(LDFLAGS) $^ $(EFI_LIBS) lib/lib.a
++
+ fallback.o: $(FALLBACK_SRCS)
+ 
+ $(FBSONAME): $(FALLBACK_OBJS) $(LIBS)
+@@ -227,6 +232,7 @@ install : install-deps install-debuginfo install-debugsource
+ 	$(INSTALL) -d -m 0755 $(DESTDIR)/$(TARGETDIR)
+ 	$(INSTALL) -m 0644 $(SHIMNAME) $(DESTDIR)/$(EFIBOOTDIR)/$(BOOTEFINAME)
+ 	$(INSTALL) -m 0644 $(SHIMNAME) $(DESTDIR)/$(TARGETDIR)/
++	$(INSTALL) -m 0644 $(SHIMNXNAME) $(DESTDIR)/$(TARGETDIR)/
+ 	$(INSTALL) -m 0644 $(BOOTCSVNAME) $(DESTDIR)/$(TARGETDIR)/
+ ifneq ($(origin ENABLE_SHIM_CERT),undefined)
+ 	$(INSTALL) -m 0644 $(FBNAME).signed $(DESTDIR)/$(EFIBOOTDIR)/$(FBNAME)
+@@ -253,6 +259,9 @@ else
+ 	$(INSTALL) -m 0644 $(FBNAME) $(DESTDIR)/$(DATATARGETDIR)/$(FBNAME)
+ endif
+ 
++# shim.nx.efi, mm.efi, fb.efi needs to have the NX flag set
++$(SHIMNXNAME) $(MMNAME) $(FBNAME): POST_PROCESS_PE_FLAGS+=-n
++
+ %.efi: %.so
+ ifneq ($(OBJCOPY_GTE224),1)
+ 	$(error objcopy >= 2.24 is required)
+diff --git a/globals.c b/globals.c
+index b4e80dd..f6bf3dc 100644
+--- a/globals.c
++++ b/globals.c
+@@ -29,7 +29,10 @@ int loader_is_participating;
+ UINT8 user_insecure_mode;
+ UINT8 ignore_db;
+ UINT8 trust_mok_list;
+-UINT8 mok_policy = 0;
++#ifndef MOK_POLICY_DEFAULT
++#define MOK_POLICY_DEFAULT 0
++#endif
++UINT8 mok_policy = MOK_POLICY_DEFAULT;
+ 
+ UINT32 verbose = 0;
+ 
+diff --git a/globals_nx.c b/globals_nx.c
+new file mode 100644
+index 0000000..c3f0b6b
+--- /dev/null
++++ b/globals_nx.c
+@@ -0,0 +1,2 @@
++#define MOK_POLICY_DEFAULT MOK_POLICY_REQUIRE_NX
++#include "globals.c"

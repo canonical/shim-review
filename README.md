@@ -32,12 +32,12 @@ Ubuntu
 *******************************************************************************
 ### What's the justification that this really does need to be signed for the whole world to be able to boot it?
 *******************************************************************************
-We're a well-known Linux distro
+We are a well-known and widely used Linux distro.
 
 *******************************************************************************
 ### Why are you unable to reuse shim from another distro that is already signed?
 *******************************************************************************
-We are big distro with many custom grub patches.
+We build and sign our own bootloaders and kernels with many custom patches.
 
 *******************************************************************************
 ### Who is the primary contact for security updates, etc.?
@@ -112,23 +112,31 @@ Patches included also previous submission:
  * debian/patches/ubuntu-no-addend-vendor-dbx.patch: Stop addending the vendor
    dbx to the MokListX, ours is too large. Our kernels don't read it anyway,
    and new ones that will can just embed it themselves.
+ * debian/patches/Build-an-additional-NX-shim-mark-MokManager-and-Fallback-.patch:
+   Build two copies of shim for NX rollout. Mark MokManager and Fallback as NX_COMPAT.
+   (Enforcement properties of the two shims are detailed in the next answer.)
 
-
-No new patches.
+The second patch is new, and is part of our NX rollout.
 
 *******************************************************************************
 ### Do you have the NX bit set in your shim? If so, is your entire boot stack NX-compatible and what testing have you done to ensure such compatibility?
 
 See https://techcommunity.microsoft.com/t5/hardware-dev-center/nx-exception-for-shim-community/ba-p/3976522 for more details on the signing of shim without NX bit.
 *******************************************************************************
-- 2.06 with lockdown backports, shim_lock, with rhboot/linuxefi/Canonical like implementation.
-- 2.12 with PE verification via shim and loading via "peimage.mod" loader
+
+ * There are two shims per architecture:
+   1. With the NX_COMPAT bit and MokPolicy set to enforce NX
+   2. Without the NX_COMPAT bit and MokPolicy set to not require NX
+ * We have implemented NX compatibility in the latest version of GRUB2 in Ubuntu 24.10
+ * We have had NX compatible kernels for a while
+
 
 *******************************************************************************
 ### What exact implementation of Secure Boot in GRUB2 do you have? (Either Upstream GRUB2 shim_lock verifier or Downstream RHEL/Fedora/Debian/Canonical-like implementation)
 Skip this, if you're not using GRUB2.
 *******************************************************************************
-[your text here]
+- GRUB 2.06 with "Downstream RHEL/Fedora/Debian/Canonical-like implementation"
+- GRUB 2.12 with "Upstream GRUB2 shim_lock verifier" with the peimage loader added
 
 *******************************************************************************
 ### Do you have fixes for all the following GRUB2 CVEs applied?
@@ -187,13 +195,11 @@ Yes.
 ### Does your new chain of trust disallow booting old GRUB2 builds affected by the CVEs?
 If you had no previous signed shim, say so here. Otherwise a simple _yes_ will do.
 *******************************************************************************
-Ubuntu shim uses a self-managed CA certificate as the VENDOR_CERT. It remains
-unchanged.
 
-This version revokes all previously used certificates, so is a clean
-slate that doesn't trust any existing binary.
+ * Pre-SBAT shims were revoked in dbx update.
+ * We use a self-managed CA certificate as the VENDOR_CERT.
+ * Vulnerable artefacts signed by the CA are revoked via VENDOR_DBX or SBAT.
 
-Pre-SBAT shim was revoked in dbx update
 
 *******************************************************************************
 ### If your boot chain of trust includes a Linux kernel:
@@ -299,7 +305,7 @@ This ensures that your new shim+GRUB2 can no longer chainload those older GRUB2 
 
 If this is your first application or you're using a new CA certificate, please say so here.
 *******************************************************************************
-We are shipping vendor_dbx that includes all previously used certificates.
+We are shipping VENDOR_DBX that includes all previously used certificates.
 
 *******************************************************************************
 ### Is the Dockerfile in your repository the recipe for reproducing the building of your shim binary?
@@ -309,26 +315,15 @@ Hint: Prefer using *frozen* packages for your toolchain, since an update to GCC,
 
 If your shim binaries can't be reproduced using the provided Dockerfile, please explain why that's the case, what the differences would be and what build environment (OS and toolchain) is being used to reproduce this build? In this case please write a detailed guide, how to setup this build environment from scratch.
 *******************************************************************************
-Ubuntu 23.10 (Mantic Minotaur):
+The shim binaries were built in Ubuntu 24.04 LTS (Noble Numbat).
 
-    binutils (= 2.41-5ubuntu1),
-    binutils-aarch64-linux-gnu (= 2.41-5ubuntu1),
-    binutils-common (= 2.41-5ubuntu1),
-    binutils-x86-64-linux-gnu (= 2.41-5ubuntu1),
-    gcc-13 (= 13.2.0-4ubuntu3),
-    gcc-13-base (= 13.2.0-4ubuntu3),
-    gcc (= 4:13.2.0-1ubuntu1),
-    libc6-dev (= 2.38-1ubuntu6),
-
-To build:
-
-Use included Dockerfiles or just check the GitHub workflow which does it for you.
+The provided Dockerfile should reproduce the binaries, this is also demonstrated by a GitHub workflow.
 
 *******************************************************************************
 ### Which files in this repo are the logs for your build?
 This should include logs for creating the buildroots, applying patches, doing the build, creating the archives, etc.
 *******************************************************************************
-The `buildlog_*` files
+The `buildlog_*` files.
 
 *******************************************************************************
 ### What changes were made in the distro's secure boot chain since your SHIM was last signed?
@@ -336,15 +331,17 @@ For example, signing new kernel's variants, UKI, systemd-boot, new certs, new CA
 
 Skip this, if this is your first application for having shim signed.
 *******************************************************************************
-Rebased against 15.8
+We have an NX compatible shim now.
 
 *******************************************************************************
 ### What is the SHA256 hash of your final shim binary?
 *******************************************************************************
 
     $ sha256sum shim*.efi
-    21d895284c1783b4e3d82584bc4aca197204f385f0da2192e2222e501ed9cc1b  shimaa64.efi
-    39037872a0bb357a0f40c5e3ce6a1757b5b54c78c31f8d5da01169c2ca94b3a7  shimx64.efi
+    cbb8344f28251666fdf72b5441b0f8baa6acaa54ccf3ba7a22be1c322396761b  shimaa64.efi
+    b638835c84d03d7bcf9f7dcca84d2c3d1cac010c5a627283335882aeeae95222  shimaa64.nx.efi
+    e0998956d4af07192246ffe45ba80351dea4457d2b55b523f42562715fae9fa3  shimx64.efi
+    a52e66a6d58f923ae3621ff34e89f922c49210390f15fdf174c26ab1a34cdd1d  shimx64.nx.efi
 
 *******************************************************************************
 ### How do you manage and protect the keys used in your shim?
@@ -379,26 +376,26 @@ shim, fb, mm:
 
     sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
     shim,4,UEFI shim,shim,1,https://github.com/rhboot/shim
-    shim.ubuntu,1,Ubuntu,shim,15.8-0ubuntu1,https://www.ubuntu.com/
+    shim.ubuntu,1,Ubuntu,shim,15.8-0ubuntu2,https://www.ubuntu.com/
 
-grub: (template)
+grub: (template, versions and peimage presence vary per series)
 
     sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
     grub,4,Free Software Foundation,grub,@UPSTREAM_VERSION@,https://www.gnu.org/software/grub/
-    grub.ubuntu,1,Ubuntu,grub2,@DEB_VERSION@,https://www.ubuntu.com/
-    grub.peimage,1,Canonical,grub2,@DEB_VERSION@,https://salsa.debian.org/grub-team/grub/-/blob/master/debian/patches/secure-boot/efi-use-peimage-shim.patch
+    grub.ubuntu,2,Ubuntu,grub2,@DEB_VERSION@,https://www.ubuntu.com/
+    grub.peimage,2,Canonical,grub2,@DEB_VERSION@,https://salsa.debian.org/grub-team/grub/-/blob/master/debian/patches/secure-boot/efi-use-peimage-shim.patch
 
-fwupd:
+fwupd (versions vary per series):
 
     sbat,1,UEFI shim,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    fwupd,1,Firmware update daemon,fwupd,1.9.5,https://github.com/fwupd/fwupd
-    fwupd.ubuntu,1,Ubuntu,fwupd,1.9.5-1,https://launchpad.net/ubuntu/+source/fwupd
+    fwupd,1,Firmware update daemon,fwupd,$UPSTREAM_VERSION$,https://github.com/fwupd/fwupd
+    fwupd.ubuntu,1,Ubuntu,fwupd,$PACKAGE_VERSION$,https://launchpad.net/ubuntu/+source/fwupd
 
-kernel.efi:
+kernel.efi (versions vary per series):
 
     sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    systemd,1,The systemd Developers,systemd,253,https://www.freedesktop.org/wiki/Software/systemd
-    systemd.ubuntu,1,Ubuntu,systemd,253.5-1ubuntu6.1,https://bugs.launchpad.net/ubuntu/
+    systemd,1,The systemd Developers,systemd,$UPSTREAM_VERSION$,https://www.freedesktop.org/wiki/Software/systemd
+    systemd.ubuntu,1,Ubuntu,systemd,$PACKAGE_VERSION$,https://bugs.launchpad.net/ubuntu/
 
 
 *******************************************************************************
@@ -539,7 +536,7 @@ Hint: The most common case here will be a firmware updater like fwupd.
 We load various UKIs which use systemd-boot stub to combine kernels and initrds
 into a single binary.
 
-fwupd of course.
+We use fwupd as a firmware updater.
 
 *******************************************************************************
 ### If your GRUB2 or systemd-boot launches any other binaries that are not the Linux kernel in SecureBoot mode, please provide further details on what is launched and how it enforces Secureboot lockdown.
@@ -560,7 +557,7 @@ Our kernels also check MokListXRT for revocations for kexec.
 *******************************************************************************
 ### Does your shim load any loaders that support loading unsigned kernels (e.g. certain GRUB2 configurations)?
 *******************************************************************************
-No, our grub enforces lockdown & uses shim protocol to verify next component.
+No, our GRUB enforces lockdown & uses shim protocol to verify next component.
 
 *******************************************************************************
 ### What kernel are you using? Which patches and configuration does it include to enforce Secure Boot?
@@ -577,37 +574,28 @@ A reasonable timeframe of waiting for a review can reach 2-3 months. Helping us 
 
 For newcomers, the applications labeled as [*easy to review*](https://github.com/rhboot/shim-review/issues?q=is%3Aopen+is%3Aissue+label%3A%22easy+to+review%22) are recommended to start the contribution process.
 *******************************************************************************
-[your text here]
+
+ * Julian Andres Klode has done shim reviews in the past.
+ * Mate Kukri has done some unofficial shim reviews during the initial 15.8 rollout.
 
 *******************************************************************************
 ### Add any additional information you think we may need to validate this shim signing application.
 *******************************************************************************
-VENDOR_DBX file is included as canonical-dbx-20221103.esl
-One can unpack them using `sig-list-to-certs` utility, and
-finds as the changelog states:
 
-    This vendor dbx revokes all certificates that have been used
-    so far.
-    - CN = Canonical Ltd. Secure Boot Signing
-    - CN = Canonical Ltd. Secure Boot Signing (2017)
-    - CN = Canonical Ltd. Secure Boot Signing (ESM 2018)
-    - CN = Canonical Ltd. Secure Boot Signing (2019)
-    - CN = Canonical Ltd. Secure Boot Signing (Ubuntu Core 2019)
-    - CN = Canonical Ltd. Secure Boot Signing (2021 v1)
-    - CN = Canonical Ltd. Secure Boot Signing (2021 v2)
-    - CN = Canonical Ltd. Secure Boot Signing (2021 v3)
+ * VENDOR_DBX file is included as `canonical-dbx-20221103.esl`.
+   One can unpack them using `sig-list-to-certs` utility.
 
+ * We have disabled the ExitBootServices check:
+   - In the case of GRUB 2.06, in order to allow chainloading EFI executables. GRUB 2.06 uses the
+     older linuxefi loader for verifying kernels, and it verifies chainloaded EFI executables via the
+     firmware only.
+   - In order to allow booting artefacts directly from shim that do not have the need to do further verifications.
+     For instance, we build CVM cloud images that directly boot UKIs from shim that do not need
+     to do further verifications.
 
-- we have disabled ExitBootServices check, to allow chainloading a
-  second shim from disk, from netbooted shim+grub. All shims these
-  days require signature validation thus this is safe to do. We need
-  this to support secureboot in https://maas.io which by default
-  netboots & recovers bare metal machines.
+ * We have disabled the unacceptable 5s boot delay in fallback when
+   TPM is present, as it impacts bootspeed for the noninteractive
+   cloud instances that have vTPM & SecureBoot.
 
-- we have disabled the unacceptable 5s boot delay in fallback when
-  TPM is present, as it impacts bootspeed for the noninteractive
-  cloud instances that have vTPM & SecureBoot.
-
-- our revocation policy is as follows:
-  + Automatic SbatLevel applied by shim itself: `shim,2\ngrub,3\ngrub.debian,4\n`
-  + We do not use revocations.efi.
+ * We currently use shim itself to roll out SbatLevel. `revocations.efi` isn't used currently.
+   This might change in the future.

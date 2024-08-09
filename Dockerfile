@@ -1,4 +1,4 @@
-FROM ubuntu:mantic
+FROM ubuntu:noble
 
 RUN sed -i 's/# deb-src/deb-src/' /etc/apt/sources.list
 # disable -updates, only building against -security
@@ -9,7 +9,7 @@ COPY *.efi /shim-review/
 RUN git clone https://git.launchpad.net/~ubuntu-uefi-team/+git/shim
 WORKDIR /shim
 RUN apt build-dep -y ./
-RUN gbp buildpackage -b -us -uc
+RUN gbp buildpackage --no-pre-clean -b -us -uc
 WORKDIR /
 RUN DEBIAN_FRONTEND=noninteractive apt install -y pesign
 RUN objcopy /shim/shimx64.efi unused.efi --dump-section .sbat=/dev/stdout
@@ -17,4 +17,10 @@ RUN pesign -h -i /shim/shimx64.efi
 RUN sha256sum /shim-review/shimx64.efi /shim/shimx64.efi
 RUN hexdump -Cv /shim-review/shimx64.efi > orig
 RUN hexdump -Cv /shim/shimx64.efi > build
+RUN diff -u orig build
+RUN objcopy /shim/shimx64.nx.efi unused.efi --dump-section .sbat=/dev/stdout
+RUN pesign -h -i /shim/shimx64.nx.efi
+RUN sha256sum /shim-review/shimx64.nx.efi /shim/shimx64.nx.efi
+RUN hexdump -Cv /shim-review/shimx64.nx.efi > orig
+RUN hexdump -Cv /shim/shimx64.nx.efi > build
 RUN diff -u orig build
