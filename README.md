@@ -15,6 +15,10 @@ Note that we really only have experience with using GRUB2 or systemd-boot on Lin
 asking us to endorse anything else for signing is going to require some convincing on
 your part.
 
+As of 27 June 2026, shims sent to Microsoft can only be signed by the Microsoft UEFI CA 2023. It is no longer possible to get your shim signed by the "old" Microsoft Corporation UEFI CA 2011 key. Up-to-date information from Microsoft about Secure Boot can be found here: https://support.microsoft.com/en-US/servicing/os/secure-boot/2026/02/updates-and-announcements
+
+New signing requirements have also taken effect, and are available here: https://techcommunity.microsoft.com/blog/hardware-dev-center/updated-microsoft-uefi-signing-requirements/1062916 Please note that undergoing this shim review exempts you from yearly security audits, as long as your shim only hands off to open source boot loaders.
+
 Hint: check the [docs](./docs/) directory in this repo for guidance on submission and getting your shim signed.
 
 Here's the template:
@@ -22,7 +26,30 @@ Here's the template:
 *******************************************************************************
 ### What organization or people are asking to have this signed?
 *******************************************************************************
+Organization name and website:  
 Canonical Ltd.
+
+*******************************************************************************
+### What's the legal data that proves the organization's genuineness?
+The reviewers should be able to easily verify, that your organization is a legal entity, to prevent abuse.
+Provide the information, which can prove the genuineness with certainty.
+*******************************************************************************
+Company/tax register entries or equivalent:  
+(a link to the organization entry in your jurisdiction's register will do)  
+
+[your text here]
+
+The public details of both your organization and the issuer in the EV certificate used for signing .cab files at Microsoft Hardware Dev Center File Signing Services.  
+(**not** the CA certificate embedded in your shim binary)
+
+Example:
+
+```
+Issuer: O=MyIssuer, Ltd., CN=MyIssuer EV Code Signing CA
+Subject: C=XX, O=MyCompany, Inc., CN=MyCompany, Inc.
+```
+
+[your text here]
 
 *******************************************************************************
 ### What product or service is this for?
@@ -45,15 +72,14 @@ The security contacts need to be verified before the shim can be accepted. For s
 
 An authorized reviewer will initiate contact verification by sending each security contact a PGP-encrypted email containing random words.
 You will be asked to post the contents of these mails in your `shim-review` issue to prove ownership of the email addresses and PGP keys.
+Please upload the PGP keys to a well-known keyserver like keyserver.ubuntu.com and/or include them in the review as an .asc file, and point to them here.
+
 *******************************************************************************
 - Name: Julian Andres Klode
 - Position: engineer
 - Email address: julian.klode@canonical.com
 - PGP key fingerprint: AEE1 C8AA AAF0 B768 4019  C546 021B 361B 6B03 1B00
-
-(Key should be signed by the other security contacts, pushed to a keyserver
-like keyserver.ubuntu.com, and preferably have signatures that are reasonably
-well known in the Linux community.)
+- File/keyserver location:
 
 *******************************************************************************
 ### Who is the secondary contact for security updates, etc.?
@@ -63,33 +89,44 @@ Secondary contact 1:
 - Position: engineer
 - Email address: dannf@ubuntu.com
 - PGP key fingerprint: 09F4 7DBF 2D32 EEDC 2443  EBEE 1BF8 3C5E 54FC 8640
+- File/keyserver location:
 
 Secondary contact 2:
 - Name: Mate Kukri
 - Position: Software Engineer
 - Email address: mate.kukri@canonical.com
 - PGP key fingerprint: 9850 FD0C 92D5 2276 794E  4595 5243 F6D8 1246 00EC
-
-(Key should be signed by the other security contacts, pushed to a keyserver
-like keyserver.ubuntu.com, and preferably have signatures that are reasonably
-well known in the Linux community.)
+- File/keyserver location:
 
 *******************************************************************************
-### Were these binaries created from the 15.8 shim release tar?
-Please create your shim binaries starting with the 15.8 shim release tar file: https://github.com/rhboot/shim/releases/download/15.8/shim-15.8.tar.bz2
+### Were these binaries created from the 16.1 shim release tar?
+Please create your shim binaries starting with the 16.1 shim release tar file: https://github.com/rhboot/shim/releases/download/16.1/shim-16.1.tar.bz2
 
-This matches https://github.com/rhboot/shim/releases/tag/15.8 and contains the appropriate gnu-efi source.
+This matches https://github.com/rhboot/shim/releases/tag/16.1 and contains the appropriate gnu-efi source.
 
-Make sure the tarball is correct by verifying your download's checksum with the following ones:
+Make sure the tarball is correct by verifying your download's checksum
+(SHA256, SHA512) with the following ones:
 
 ```
-a9452c2e6fafe4e1b87ab2e1cac9ec00  shim-15.8.tar.bz2
-cdec924ca437a4509dcb178396996ddf92c11183  shim-15.8.tar.bz2
-a79f0a9b89f3681ab384865b1a46ab3f79d88b11b4ca59aa040ab03fffae80a9  shim-15.8.tar.bz2
-30b3390ae935121ea6fe728d8f59d37ded7b918ad81bea06e213464298b4bdabbca881b30817965bd397facc596db1ad0b8462a84c87896ce6c1204b19371cd1  shim-15.8.tar.bz2
+46319cd228d8f2c06c744241c0f342412329a7c630436fce7f82cf6936b1d603  shim-16.1.tar.bz2
+ca5f80e82f3b80b622028f03ef23105c98ee1b6a25f52a59c823080a3202dd4b9962266489296e99f955eb92e36ce13e0b1d57f688350006bba45f2718f159fb  shim-16.1.tar.bz2
 ```
 
-Make sure that you've verified that your build process uses that file as a source of truth (excluding external patches) and its checksum matches. Furthermore, there's [a detached signature as well](https://github.com/rhboot/shim/releases/download/15.8/shim-15.8.tar.bz2.asc) - check with the public key that has the fingerprint `8107B101A432AAC9FE8E547CA348D61BC2713E9F` that the tarball is authentic. Once you're sure, please confirm this here with a simple *yes*.
+Make sure that you've verified that your build process uses that file
+as a source of truth (excluding external patches) and its checksum
+matches. You can also further validate the release by checking the PGP
+signature: there's [a detached
+signature](https://github.com/rhboot/shim/releases/download/16.1/shim-16.1.tar.bz2.asc)
+
+The release is signed by the maintainer Peter Jones - his master key
+has the fingerprint `B00B48BC731AA8840FED9FB0EED266B70F4FEF10` and the
+signing sub-key in the signature here has the fingerprint
+`02093E0D19DDE0F7DFFBB53C1FD3F540256A1372`. A copy of his public key
+is included here for reference:
+[pjones.asc](https://github.com/rhboot/shim-review/blob/main/pjones.asc)
+
+Once you're sure that the tarball you are using is correct and
+authentic, please confirm this here with a simple *yes*.
 
 A short guide on verifying public keys and signatures should be available in the [docs](./docs/) directory.
 *******************************************************************************
@@ -180,13 +217,36 @@ Skip this, if you're not using GRUB2.
   * Details: https://lists.gnu.org/archive/html/grub-devel/2023-10/msg00028.html, SBAT increase to 4
   * CVE-2023-4693
   * CVE-2023-4692
+* February 2025
+  * Details: https://lists.gnu.org/archive/html/grub-devel/2025-02/msg00024.html, SBAT increase to 5
+  * CVE-2024-45774
+  * CVE-2024-45775
+  * CVE-2024-45776
+  * CVE-2024-45777
+  * CVE-2024-45778
+  * CVE-2024-45779
+  * CVE-2024-45780
+  * CVE-2024-45781
+  * CVE-2024-45782
+  * CVE-2024-45783
+  * CVE-2025-0622
+  * CVE-2025-0624
+  * CVE-2025-0677
+  * CVE-2025-0678
+  * CVE-2025-0684
+  * CVE-2025-0685
+  * CVE-2025-0686
+  * CVE-2025-0689
+  * CVE-2025-0690
+  * CVE-2025-1118
+  * CVE-2025-1125
 *******************************************************************************
 Yes.
 
 *******************************************************************************
-### If shim is loading GRUB2 bootloader, and if these fixes have been applied, is the upstream global SBAT generation in your GRUB2 binary set to 4?
-Skip this, if you're not using GRUB2, otherwise do you have an entry in your GRUB2 binary similar to:
-`grub,4,Free Software Foundation,grub,GRUB_UPSTREAM_VERSION,https://www.gnu.org/software/grub/`?
+### If shim is loading GRUB2 bootloader, and if these fixes have been applied, is the upstream global SBAT generation in your GRUB2 binary set to 5?
+Skip this, if you're not using GRUB2, otherwise do you have an entry in your GRUB2 binary similar to:  
+`grub,5,Free Software Foundation,grub,GRUB_UPSTREAM_VERSION,https://www.gnu.org/software/grub/`?
 *******************************************************************************
 Yes.
 
@@ -214,6 +274,12 @@ applied.
 
 All vulnerable kernels are disallowed to boot by VENDOR_DBX by their signing
 cert being revoked in vendor dbx.
+
+*******************************************************************************
+### How does your signed kernel enforce lockdown when your system runs with Secure Boot enabled?
+Hint: If it does not, we are not likely to sign your shim.
+*******************************************************************************
+[your text here]
 
 *******************************************************************************
 ### Do you build your signed kernel with additional local patches? What do they do?
@@ -361,6 +427,15 @@ A _yes_ or _no_ will do. There's no penalty for the latter.
 No
 
 *******************************************************************************
+### Are you embedding a CA certificate in your shim?
+A _yes_ or _no_ will do. There's no penalty for the latter. However,
+if _yes_: does that certificate include the X509v3 Basic Constraints
+to say that it is a CA? See the [docs](./docs/) for more guidance
+about this.
+*******************************************************************************
+[your text here]
+
+*******************************************************************************
 ### Do you add a vendor-specific SBAT entry to the SBAT section in each binary that supports SBAT metadata ( GRUB2, fwupd, fwupdate, systemd-boot, systemd-stub, shim + all child shim binaries )?
 ### Please provide the exact SBAT entries for all binaries you are booting directly through shim.
 Hint: The history of SBAT and more information on how it works can be found [here](https://github.com/rhboot/shim/blob/main/SBAT.md). That document is large, so for just some examples check out [SBAT.example.md](https://github.com/rhboot/shim/blob/main/SBAT.example.md)
@@ -369,7 +444,7 @@ If you are using a downstream implementation of GRUB2 (e.g. from Fedora or Debia
 
 **Remember to post the entries of all the binaries. Apart from your bootloader, you may also be shipping e.g. a firmware updater, which will also have these.**
 
-Hint: run `objcopy --only-section .sbat -O binary YOUR_EFI_BINARY /dev/stdout` to get these entries. Paste them here. Preferably surround each listing with three backticks (\`\`\`), so they render well.
+Hint: run `objcopy --dump-section .sbat=/dev/stdout YOUR_EFI_BINARY` to get these entries. Paste them here. Preferably surround each listing with three backticks (\`\`\`), so they render well.
 *******************************************************************************
 
 shim, fb, mm:
