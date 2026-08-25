@@ -26,7 +26,7 @@ jobs:
       - name: Build amd64
         id: test-amd64
         run: |
-          podman build .
+          podman build --arch amd64 -t shim-amd64 .
 
   arm64:
     runs-on: ubuntu-latest
@@ -40,13 +40,13 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Install qemu-user-static
+      - name: Install qemu-user
         id: install-qemu
         run: |
-          sudo DEBIAN_FRONTEND=noninteractive apt install -y qemu-user-static
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y qemu-user
 
       - name: Build arm64
         id: test-arm64
         run: |
-          podman build -f Dockerfile.arm64
+          podman build --arch arm64 -f Dockerfile.arm64 -t shim-arm64 .
 
