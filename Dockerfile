@@ -1,12 +1,12 @@
-FROM ubuntu:noble
+FROM ubuntu:resolute
 
-RUN sed -i 's/# deb-src/deb-src/' /etc/apt/sources.list
-# disable -updates, only building against -security
-RUN sed -i /-updates/d /etc/apt/sources.list
+RUN sed -i 's/^Types: deb/& deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+# disable -updates; shim is built against the release + security pockets only
+RUN sed -i 's/ [^ ]*-updates//g' /etc/apt/sources.list.d/ubuntu.sources
 RUN apt update -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y devscripts git-buildpackage
 COPY *.efi /shim-review/
-RUN git clone https://git.launchpad.net/~ubuntu-uefi-team/+git/shim
+RUN git clone https://git.launchpad.net/~ubuntu-core-dev/shim/+git/shim
 WORKDIR /shim
 RUN apt build-dep -y ./
 RUN gbp buildpackage --no-pre-clean -b -us -uc
@@ -17,10 +17,4 @@ RUN pesign -h -i /shim/shimx64.efi
 RUN sha256sum /shim-review/shimx64.efi /shim/shimx64.efi
 RUN hexdump -Cv /shim-review/shimx64.efi > orig
 RUN hexdump -Cv /shim/shimx64.efi > build
-RUN diff -u orig build
-RUN objcopy /shim/shimx64.nx.efi unused.efi --dump-section .sbat=/dev/stdout
-RUN pesign -h -i /shim/shimx64.nx.efi
-RUN sha256sum /shim-review/shimx64.nx.efi /shim/shimx64.nx.efi
-RUN hexdump -Cv /shim-review/shimx64.nx.efi > orig
-RUN hexdump -Cv /shim/shimx64.nx.efi > build
 RUN diff -u orig build

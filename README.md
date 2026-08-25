@@ -27,7 +27,7 @@ Here's the template:
 ### What organization or people are asking to have this signed?
 *******************************************************************************
 Organization name and website:  
-Canonical Ltd.
+Canonical Ltd. — https://www.canonical.com/
 
 *******************************************************************************
 ### What's the legal data that proves the organization's genuineness?
@@ -37,19 +37,17 @@ Provide the information, which can prove the genuineness with certainty.
 Company/tax register entries or equivalent:  
 (a link to the organization entry in your jurisdiction's register will do)  
 
-[your text here]
+https://find-and-update.company-information.service.gov.uk/company/06870835
 
 The public details of both your organization and the issuer in the EV certificate used for signing .cab files at Microsoft Hardware Dev Center File Signing Services.  
 (**not** the CA certificate embedded in your shim binary)
 
-Example:
-
 ```
-Issuer: O=MyIssuer, Ltd., CN=MyIssuer EV Code Signing CA
-Subject: C=XX, O=MyCompany, Inc., CN=MyCompany, Inc.
+subject=jurisdictionC=GB, businessCategory=Private Organization, serialNumber=06870835, C=GB, L=London, O=CANONICAL GROUP LIMITED, CN=CANONICAL GROUP LIMITED
+issuer=C=US, O=DigiCert, Inc., CN=DigiCert Trusted G4 Code Signing RSA4096 SHA384 2021 CA1
+notBefore=Mar 16 00:00:00 2026 GMT
+notAfter=Mar 15 23:59:59 2027 GMT
 ```
-
-[your text here]
 
 *******************************************************************************
 ### What product or service is this for?
@@ -79,24 +77,28 @@ Please upload the PGP keys to a well-known keyserver like keyserver.ubuntu.com a
 - Position: engineer
 - Email address: julian.klode@canonical.com
 - PGP key fingerprint: AEE1 C8AA AAF0 B768 4019  C546 021B 361B 6B03 1B00
-- File/keyserver location:
+- File/keyserver location: https://keyserver.ubuntu.com/pks/lookup?search=0x021B361B6B031B00&op=index
 
 *******************************************************************************
 ### Who is the secondary contact for security updates, etc.?
 *******************************************************************************
-Secondary contact 1:
-- Name: dann frazier
-- Position: engineer
-- Email address: dannf@ubuntu.com
-- PGP key fingerprint: 09F4 7DBF 2D32 EEDC 2443  EBEE 1BF8 3C5E 54FC 8640
-- File/keyserver location:
-
-Secondary contact 2:
 - Name: Mate Kukri
 - Position: Software Engineer
 - Email address: mate.kukri@canonical.com
-- PGP key fingerprint: 9850 FD0C 92D5 2276 794E  4595 5243 F6D8 1246 00EC
-- File/keyserver location:
+- PGP key fingerprint: 844F 395E 47DA B2E2 900A  FEA7 7063 490E 7DB7 7482
+- File/keyserver location: https://keyserver.ubuntu.com/pks/lookup?op=vindex&search=0x844F395E47DAB2E2900AFEA77063490E7DB77482
+
+Note on contacts and keys since our 15.8 review:
+
+ * Julian Andres Klode's key (AEE1 C8AA AAF0 B768 4019  C546 021B 361B 6B03 1B00)
+   is unchanged and has already been verified in the 15.8 review.
+ * Mate Kukri has rotated his key: the RSA4096 key above
+   (844F 395E 47DA B2E2 900A  FEA7 7063 490E 7DB7 7482) replaces his previous
+   RSA2048 key (9850 FD0C 92D5 2276 794E  4595 5243 F6D8 1246 00EC), and is
+   cross-signed by that old key. As his key has changed, it may require
+   re-verification.
+ * dann frazier, who was a secondary contact in previous submissions, has been
+   removed as he is no longer at Canonical.
 
 *******************************************************************************
 ### Were these binaries created from the 16.1 shim release tar?
@@ -130,7 +132,9 @@ authentic, please confirm this here with a simple *yes*.
 
 A short guide on verifying public keys and signatures should be available in the [docs](./docs/) directory.
 *******************************************************************************
-The shim-15.8.tar.bz2 is used as the original tarball.
+Yes. The shim-16.1.tar.bz2 release tarball is used as the orig tarball. Its
+SHA256 and SHA512 checksums match the ones above, and the detached PGP signature
+verifies against Peter Jones' key.
 
 *******************************************************************************
 ### URL for a repo that contains the exact code which was built to result in your binary:
@@ -138,42 +142,68 @@ Hint: If you attach all the patches and modifications that are being used to you
 
 You can also point to your custom git servers, where the code is hosted.
 *******************************************************************************
-https://code.launchpad.net/~ubuntu-uefi-team/+git/shim/+ref/master
+https://code.launchpad.net/~ubuntu-core-dev/shim/+git/shim/+ref/master
+
+The exact package built is shim 16.1-0ubuntu1, published for Ubuntu 26.04 LTS
+(Resolute) in https://launchpad.net/~ubuntu-uefi-team/+archive/ubuntu/build
 
 *******************************************************************************
 ### What patches are being applied and why:
 Mention all the external patches and build process modifications, which are used during your building process, that make your shim binary be the exact one that you posted as part of this application.
 *******************************************************************************
-Patches included also previous submission:
+Patches (debian/patches), applied on top of the shim 16.1 release tarball:
 
- * debian/patches/ubuntu-no-addend-vendor-dbx.patch: Stop addending the vendor
-   dbx to the MokListX, ours is too large. Our kernels don't read it anyway,
-   and new ones that will can just embed it themselves.
- * debian/patches/Build-an-additional-NX-shim-mark-MokManager-and-Fallback-.patch:
-   Build two copies of shim for NX rollout. Mark MokManager and Fallback as NX_COMPAT.
-   (Enforcement properties of the two shims are detailed in the next answer.)
+ * ubuntu-no-addend-vendor-dbx.patch: Stop addending the vendor dbx to the
+   MokListX, ours is too large. Our kernels don't read it anyway, and new ones
+   that will can just embed it themselves. (Carried over from previous
+   submissions.)
+ * Fix-build-with-binutils-2.46.patch: Build fix for the binutils 2.46 toolchain
+   used in Ubuntu 26.04.
+ * test-fix-strrchr-usage.patch: Test-only fix for strrchr usage; does not affect
+   the produced binaries.
 
-The second patch is new, and is part of our NX rollout.
+Build process modifications (debian/rules), passed to the shim build:
+
+ * VENDOR_CERT_FILE=debian/canonical-uefi-ca.der
+ * VENDOR_DBX_FILE=debian/canonical-dbx-20221103.esl
+ * RELEASE=16, COMMIT_ID=afc49558b34548644c1cd0ad1b6526a9470182ed
+ * FALLBACK_NONINTERACTIVE=1 (no interactive 5s fallback delay)
+ * DISABLE_EBS_PROTECTION=1 (see the additional information below)
+ * DISABLE_REMOVABLE_LOAD_OPTIONS=1
+ * POST_PROCESS_PE_FLAGS=-n to set the NX_COMPAT flag on all Ubuntu shims.
+ * SBAT_AUTOMATIC_DATE=2025051000 to apply the latest SBAT revocations shipped in
+   shim 16.1 (resulting in the SBAT policy "shim,4\ngrub,5\ngrub.proxmox,2").
+
+The previous "Build-an-additional-NX-shim" patch has been dropped: we now build a
+single NX_COMPAT shim per architecture, as our NX rollout is complete.
 
 *******************************************************************************
 ### Do you have the NX bit set in your shim? If so, is your entire boot stack NX-compatible and what testing have you done to ensure such compatibility?
 
 See https://techcommunity.microsoft.com/t5/hardware-dev-center/nx-exception-for-shim-community/ba-p/3976522 for more details on the signing of shim without NX bit.
 *******************************************************************************
+Yes, the NX_COMPAT bit is set on all Ubuntu shims (POST_PROCESS_PE_FLAGS=-n).
 
- * There are two shims per architecture:
-   1. With the NX_COMPAT bit and MokPolicy set to enforce NX
-   2. Without the NX_COMPAT bit and MokPolicy set to not require NX
- * We have implemented NX compatibility in the latest version of GRUB2 in Ubuntu 24.10
- * We have had NX compatible kernels for a while
+During our NX rollout we shipped two shims per architecture (one with and one
+without NX_COMPAT). That rollout is now complete, so as of shim 16.1-0ubuntu1 we
+ship a single NX_COMPAT shim per architecture.
 
+Our entire boot stack is NX-compatible:
+
+ * shim 16 auto-detects the platform's NX requirements and only requires NX from
+   chainloaded binaries when the underlying platform demands it (see
+   `set_shim_nx_policy()`).
+ * We have shipped an NX-compatible GRUB2 since Ubuntu 24.10.
+ * Our kernels have been NX-compatible for a long time.
 
 *******************************************************************************
 ### What exact implementation of Secure Boot in GRUB2 do you have? (Either Upstream GRUB2 shim_lock verifier or Downstream RHEL/Fedora/Debian/Canonical-like implementation)
 Skip this, if you're not using GRUB2.
 *******************************************************************************
 - GRUB 2.06 with "Downstream RHEL/Fedora/Debian/Canonical-like implementation"
-- GRUB 2.12 with "Upstream GRUB2 shim_lock verifier" with the peimage loader added
+  (older stable series)
+- GRUB 2.12 and later (2.14 in Ubuntu 26.04) with "Upstream GRUB2 shim_lock
+  verifier" with the peimage loader added
 
 *******************************************************************************
 ### Do you have fixes for all the following GRUB2 CVEs applied?
@@ -248,7 +278,13 @@ Yes.
 Skip this, if you're not using GRUB2, otherwise do you have an entry in your GRUB2 binary similar to:  
 `grub,5,Free Software Foundation,grub,GRUB_UPSTREAM_VERSION,https://www.gnu.org/software/grub/`?
 *******************************************************************************
-Yes.
+Yes. Our GRUB2 binary in Ubuntu 26.04 has upstream SBAT generation 5:
+
+    grub,5,Free Software Foundation,grub,2.14,https://www.gnu.org/software/grub/
+
+Correspondingly, this shim ships an SBAT policy of "shim,4\ngrub,5\ngrub.proxmox,2"
+(via SBAT_AUTOMATIC_DATE=2025051000), so it refuses to boot GRUB2 binaries older
+than SBAT generation 5.
 
 *******************************************************************************
 ### Were old shims hashes provided to Microsoft for verification and to be added to future DBX updates?
@@ -256,17 +292,19 @@ Yes.
 If you had no previous signed shim, say so here. Otherwise a simple _yes_ will do.
 *******************************************************************************
 
- * Pre-SBAT shims were revoked in dbx update.
+ * Pre-SBAT shims were revoked in a dbx update.
  * We use a self-managed CA certificate as the VENDOR_CERT.
  * Vulnerable artefacts signed by the CA are revoked via VENDOR_DBX or SBAT.
-
+ * This shim ships an SBAT policy of "shim,4\ngrub,5\ngrub.proxmox,2", so it will
+   not boot GRUB2 builds older than SBAT generation 5, i.e. those affected by the
+   CVEs listed above.
 
 *******************************************************************************
 ### If your boot chain of trust includes a Linux kernel:
 ### Is upstream commit [1957a85b0032a81e6482ca4aab883643b8dae06e "efi: Restrict efivar_ssdt_load when the kernel is locked down"](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=1957a85b0032a81e6482ca4aab883643b8dae06e) applied?
 ### Is upstream commit [75b0cea7bf307f362057cc778efe89af4c615354 "ACPI: configfs: Disallow loading ACPI tables when locked down"](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=75b0cea7bf307f362057cc778efe89af4c615354) applied?
 ### Is upstream commit [eadb2f47a3ced5c64b23b90fd2a3463f63726066 "lockdown: also lock down previous kgdb use"](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=eadb2f47a3ced5c64b23b90fd2a3463f63726066) applied?
-Hint: upstream kernels should have all these applied, but if you ship your own heavily-modified older kernel version, that is being maintained separately from upstream, this may not be the case.
+Hint: upstream kernels should have all these applied, but if you ship your own heavily-modified older kernel version, that is being maintained separately from upstream, this may not be the case.  
 If you are shipping an older kernel, double-check your sources; maybe you do not have all the patches, but ship a configuration, that does not expose the issue(s).
 *******************************************************************************
 All Ubuntu kernels in all currently supported series have the above
@@ -279,7 +317,17 @@ cert being revoked in vendor dbx.
 ### How does your signed kernel enforce lockdown when your system runs with Secure Boot enabled?
 Hint: If it does not, we are not likely to sign your shim.
 *******************************************************************************
-[your text here]
+When the system is booted with UEFI Secure Boot enabled, shim reflects this via
+the EFI secure boot state; our kernels detect it and automatically enter
+integrity lockdown mode (CONFIG_LOCK_DOWN_IN_EFI_SECURE_BOOT together with our
+SAUCE lockdown patches listed below).
+
+Under lockdown, interfaces that could be used to modify the running kernel or
+extract key material are restricted (e.g. /dev/mem and /dev/kmem, unsigned module
+loading, kexec of unsigned images, kgdb, certain ACPI table overrides,
+efivar_ssdt_load, etc.), and kernel module signature verification is enforced.
+This ties the Secure Boot chain of trust into the running kernel and prevents
+loading unauthenticated code into ring 0.
 
 *******************************************************************************
 ### Do you build your signed kernel with additional local patches? What do they do?
@@ -371,7 +419,11 @@ This ensures that your new shim+GRUB2 can no longer chainload those older GRUB2 
 
 If this is your first application or you're using a new CA certificate, please say so here.
 *******************************************************************************
-We are shipping VENDOR_DBX that includes all previously used certificates.
+We are re-using our CA certificate. We ship a VENDOR_DBX
+(canonical-dbx-20221103.esl) that includes/revokes all Canonical signing
+certificates used so far, and we additionally rely on SBAT-based revocation
+(shim,4 / grub,5) so that older, vulnerable GRUB2 binaries can no longer be
+chainloaded by this shim.
 
 *******************************************************************************
 ### Is the Dockerfile in your repository the recipe for reproducing the building of your shim binary?
@@ -381,9 +433,10 @@ Hint: Prefer using *frozen* packages for your toolchain, since an update to GCC,
 
 If your shim binaries can't be reproduced using the provided Dockerfile, please explain why that's the case, what the differences would be and what build environment (OS and toolchain) is being used to reproduce this build? In this case please write a detailed guide, how to setup this build environment from scratch.
 *******************************************************************************
-The shim binaries were built in Ubuntu 24.04 LTS (Noble Numbat).
+The shim binaries were built in Ubuntu 26.04 LTS (Resolute).
 
-The provided Dockerfile should reproduce the binaries, this is also demonstrated by a GitHub workflow.
+The provided Dockerfile should reproduce the binaries, this is also demonstrated
+by a GitHub workflow.
 
 *******************************************************************************
 ### Which files in this repo are the logs for your build?
@@ -397,17 +450,23 @@ For example, signing new kernel's variants, UKI, systemd-boot, new certs, new CA
 
 Skip this, if this is your first application for having shim signed.
 *******************************************************************************
-We have an NX compatible shim now.
+
+ * New upstream shim 16.1 (previously 15.8).
+ * We now ship a single NX_COMPAT shim per architecture; the separate non-NX shim
+   has been dropped, as our NX rollout is complete.
+ * We apply the latest SBAT revocations shipped in shim 16.1
+   (SBAT_AUTOMATIC_DATE=2025051000, giving the policy "shim,4\ngrub,5\ngrub.proxmox,2"),
+   revoking pre-generation-5 GRUB2.
+ * GRUB2 has been updated to 2.14 (upstream SBAT generation 5) in Ubuntu 26.04.
+ * From 27 June 2026, shim is signed by the Microsoft UEFI CA 2023.
 
 *******************************************************************************
 ### What is the SHA256 hash of your final shim binary?
 *******************************************************************************
 
     $ sha256sum shim*.efi
-    cbb8344f28251666fdf72b5441b0f8baa6acaa54ccf3ba7a22be1c322396761b  shimaa64.efi
-    b638835c84d03d7bcf9f7dcca84d2c3d1cac010c5a627283335882aeeae95222  shimaa64.nx.efi
-    e0998956d4af07192246ffe45ba80351dea4457d2b55b523f42562715fae9fa3  shimx64.efi
-    a52e66a6d58f923ae3621ff34e89f922c49210390f15fdf174c26ab1a34cdd1d  shimx64.nx.efi
+    3a6d2d3378a15372336bf00ef1e0e414563d25956f2c24bdb94afa91bee2f28e  shimaa64.efi
+    413815fe5a103fb2eb17e31a672904984b997b7718e98396a4292bd59b8f257f  shimx64.efi
 
 *******************************************************************************
 ### How do you manage and protect the keys used in your shim?
@@ -433,7 +492,11 @@ if _yes_: does that certificate include the X509v3 Basic Constraints
 to say that it is a CA? See the [docs](./docs/) for more guidance
 about this.
 *******************************************************************************
-[your text here]
+Yes. Our VENDOR_CERT (canonical-uefi-ca.der) is a CA certificate, and it includes
+the X509v3 Basic Constraints extension marking it as a CA:
+
+    X509v3 Basic Constraints: critical
+        CA:TRUE
 
 *******************************************************************************
 ### Do you add a vendor-specific SBAT entry to the SBAT section in each binary that supports SBAT metadata ( GRUB2, fwupd, fwupdate, systemd-boot, systemd-stub, shim + all child shim binaries )?
@@ -449,29 +512,37 @@ Hint: run `objcopy --dump-section .sbat=/dev/stdout YOUR_EFI_BINARY` to get thes
 
 shim, fb, mm:
 
-    sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    shim,4,UEFI shim,shim,1,https://github.com/rhboot/shim
-    shim.ubuntu,1,Ubuntu,shim,15.8-0ubuntu2,https://www.ubuntu.com/
+```
+sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+shim,4,UEFI shim,shim,1,https://github.com/rhboot/shim
+shim.ubuntu,1,Ubuntu,shim,16.1-0ubuntu1,https://www.ubuntu.com/
+```
 
-grub: (template, versions and peimage presence vary per series)
+grub (Ubuntu 26.04; versions vary per series):
 
-    sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    grub,4,Free Software Foundation,grub,@UPSTREAM_VERSION@,https://www.gnu.org/software/grub/
-    grub.ubuntu,2,Ubuntu,grub2,@DEB_VERSION@,https://www.ubuntu.com/
-    grub.peimage,2,Canonical,grub2,@DEB_VERSION@,https://salsa.debian.org/grub-team/grub/-/blob/master/debian/patches/secure-boot/efi-use-peimage-shim.patch
+```
+sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+grub,5,Free Software Foundation,grub,2.14,https://www.gnu.org/software/grub/
+grub.ubuntu,2,Ubuntu,grub2,2.14-2ubuntu1,https://www.ubuntu.com/
+grub.ubuntu26,1,Ubuntu,grub2,2.14-2ubuntu1,https://www.ubuntu.com/
+grub.peimage,2,Canonical,grub2,2.14-2ubuntu1,https://salsa.debian.org/grub-team/grub/-/blob/master/debian/patches/secure-boot/efi-use-peimage-shim.patch
+```
 
 fwupd (versions vary per series):
 
-    sbat,1,UEFI shim,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    fwupd,1,Firmware update daemon,fwupd,$UPSTREAM_VERSION$,https://github.com/fwupd/fwupd
-    fwupd.ubuntu,1,Ubuntu,fwupd,$PACKAGE_VERSION$,https://launchpad.net/ubuntu/+source/fwupd
+```
+sbat,1,UEFI shim,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+fwupd,1,Firmware update daemon,fwupd,$UPSTREAM_VERSION$,https://github.com/fwupd/fwupd
+fwupd.ubuntu,1,Ubuntu,fwupd,$PACKAGE_VERSION$,https://launchpad.net/ubuntu/+source/fwupd
+```
 
-kernel.efi (versions vary per series):
+kernel.efi / UKI (versions vary per series):
 
-    sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-    systemd,1,The systemd Developers,systemd,$UPSTREAM_VERSION$,https://www.freedesktop.org/wiki/Software/systemd
-    systemd.ubuntu,1,Ubuntu,systemd,$PACKAGE_VERSION$,https://bugs.launchpad.net/ubuntu/
-
+```
+sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
+systemd,1,The systemd Developers,systemd,$UPSTREAM_VERSION$,https://www.freedesktop.org/wiki/Software/systemd
+systemd.ubuntu,1,Ubuntu,systemd,$PACKAGE_VERSION$,https://bugs.launchpad.net/ubuntu/
+```
 
 *******************************************************************************
 ### If shim is loading GRUB2 bootloader, which modules are built into your signed GRUB2 image?
@@ -595,9 +666,7 @@ We only use systemd-stub, not systemd-boot.
 Building / Publishing
 https://launchpad.net/ubuntu/+source/grub2-unsigned - same signed grub binaries for all series
 
-currently building next one (first one signed with it in):
-
-https://launchpad.net/~ubuntu-uefi-team/+archive/ubuntu/build/+packages
+In Ubuntu 26.04 LTS (Resolute) this is grub2-unsigned 2.14-2ubuntu1.
 
 Git managed source code
 https://code.launchpad.net/~ubuntu-core-dev/grub/+git/ubuntu/+ref/ubuntu
@@ -643,7 +712,7 @@ kernel module signatures under lockdown.
 
 *******************************************************************************
 ### What contributions have you made to help us review the applications of other applicants?
-The reviewing process is meant to be a peer-review effort and the best way to have your application reviewed faster is to help with reviewing others. We are in most cases volunteers working on this venue in our free time, rather than being employed and paid to review the applications during our business hours.
+The reviewing process is meant to be a peer-review effort and the best way to have your application reviewed faster is to help with reviewing others. We are in most cases volunteers working on this venue in our free time, rather than being employed and paid to review the applications during our business hours. 
 
 A reasonable timeframe of waiting for a review can reach 2-3 months. Helping us is the best way to shorten this period. The more help we get, the faster and the smoother things will go.
 
@@ -651,7 +720,7 @@ For newcomers, the applications labeled as [*easy to review*](https://github.com
 *******************************************************************************
 
  * Julian Andres Klode has done shim reviews in the past.
- * Mate Kukri has done some unofficial shim reviews during the initial 15.8 rollout.
+ * Mate Kukri has done shim reviews, including during the 15.8 and 16.1 rollouts.
 
 *******************************************************************************
 ### Add any additional information you think we may need to validate this shim signing application.
@@ -668,9 +737,17 @@ For newcomers, the applications labeled as [*easy to review*](https://github.com
      For instance, we build CVM cloud images that directly boot UKIs from shim that do not need
      to do further verifications.
 
+ * We have disabled the removable media fallback load options
+   (DISABLE_REMOVABLE_LOAD_OPTIONS=1).
+
  * We have disabled the unacceptable 5s boot delay in fallback when
    TPM is present, as it impacts bootspeed for the noninteractive
    cloud instances that have vTPM & SecureBoot.
 
  * We currently use shim itself to roll out SbatLevel. `revocations.efi` isn't used currently.
    This might change in the future.
+
+ * In addition to the amd64 and arm64 shims submitted here, the PPA also builds an
+   amd64v3 (x86-64-v3) variant of the shim package for the archive. That variant
+   is not part of this signing submission; only the standard amd64 (shimx64.efi)
+   and arm64 (shimaa64.efi) binaries are submitted for signing.
