@@ -6,10 +6,10 @@ RUN sed -i 's/ [^ ]*-updates//g' /etc/apt/sources.list.d/ubuntu.sources
 RUN apt update -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y devscripts git-buildpackage
 COPY *.efi /shim-review/
-RUN git clone https://git.launchpad.net/~ubuntu-core-dev/shim/+git/shim
+RUN git clone -b debian/16.1-0ubuntu1 https://git.launchpad.net/~ubuntu-core-dev/shim/+git/shim
 WORKDIR /shim
 RUN apt build-dep -y ./
-RUN gbp buildpackage --no-pre-clean -b -us -uc
+RUN gbp buildpackage --git-ignore-branch --no-pre-clean -b -us -uc
 WORKDIR /
 RUN DEBIAN_FRONTEND=noninteractive apt install -y pesign
 RUN objcopy /shim/shimx64.efi unused.efi --dump-section .sbat=/dev/stdout

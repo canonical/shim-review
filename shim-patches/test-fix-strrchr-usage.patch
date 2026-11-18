@@ -1,0 +1,28 @@
+From: Peter Jones <pjones@redhat.com>
+Date: Thu, 19 Mar 2026 17:24:41 -0400
+Subject: test: fix strrchr usage.
+
+Apparently strrchr() became a macro in glibc recently, breaking our test
+case that tries to #define it.
+
+This patch undefines it before we try to define it.
+
+Signed-off-by: Peter Jones <pjones@redhat.com>
+---
+ lib/string.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/lib/string.c b/lib/string.c
+index d941cd5..62c862b 100644
+--- a/lib/string.c
++++ b/lib/string.c
+@@ -17,6 +17,9 @@
+ #define strncmp shim_strncmp
+ #define strncasecmp shim_strncasecmp
+ #define strcasecmp shim_strcasecmp
++#ifdef strrchr
++#undef strrchr
++#endif
+ #define strrchr shim_strrchr
+ #define strlen shim_strlen
+ #define strnlen shim_strnlen

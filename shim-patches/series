@@ -1,2 +1,3 @@
 ubuntu-no-addend-vendor-dbx.patch
-Build-an-additional-NX-shim-mark-MokManager-and-Fallback-.patch
+Fix-build-with-binutils-2.46.patch
+test-fix-strrchr-usage.patch

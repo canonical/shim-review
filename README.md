@@ -142,6 +142,7 @@ Hint: If you attach all the patches and modifications that are being used to you
 You can also point to your custom git servers, where the code is hosted.
 *******************************************************************************
 https://code.launchpad.net/~ubuntu-core-dev/shim/+git/shim/+ref/master
+tagged as `debian/16.1-0ubuntu1`
 
 The exact package built is shim 16.1-0ubuntu1, published for Ubuntu 26.04 LTS
 (Resolute) in https://launchpad.net/~ubuntu-uefi-team/+archive/ubuntu/build
@@ -478,6 +479,11 @@ of which are required to assemble the cert.
 Thus we require international travel to be available to assemble it
 and issue new certificates.
 
+The signing keys are wrapped by an HSM as part of the lp-signing service.
+
+That service is accessible to the launchpad admins, and they install the keys into signing PPAs.
+Only a special set of a handful of people can copy packages to those PPAs for signing, not including any of the current, or past, authors of Canonical shim-review requests.
+
 *******************************************************************************
 ### Do you use EV certificates as embedded certificates in the shim?
 A _yes_ or _no_ will do. There's no penalty for the latter.
@@ -496,6 +502,25 @@ the X509v3 Basic Constraints extension marking it as a CA:
 
     X509v3 Basic Constraints: critical
         CA:TRUE
+
+*******************************************************************************
+### What certificates are embedded in your shim, and what are their key types and sizes?
+For each certificate embedded in your shim, state whether it is newly
+embedded in your shim or reused unchanged from your last accepted shim.
+For each certificate in your shim, provide its algorithm
+and key size.
+
+Certificates newly embedded in your shim must use an RSA key with a modulus
+of at least 4096 bits. Existing vendors reusing a certificate unchanged
+are not required to replace it, but are strongly encouraged to replace
+smaller RSA keys with 4096-bit or larger keys when they have an
+appropriate opportunity to do so.
+*******************************************************************************
+The embedded cert is: `canonical-uefi-ca.der`
+This is a 2048-bit RSA and unchanged since 2012.
+
+The work related to enabling 4096-bit or larger keys for our CAs is WIP within the organisation. 
+The plan is to have new larger keys within the next few months.
 
 *******************************************************************************
 ### Do you add a vendor-specific SBAT entry to the SBAT section in each binary that supports SBAT metadata ( GRUB2, fwupd, fwupdate, systemd-boot, systemd-stub, shim + all child shim binaries )?
@@ -695,7 +720,12 @@ Summarize in one or two sentences, how your secure bootchain works on higher lev
 *******************************************************************************
 fwupd verifies capsule signatures; kernel implements lockdown.
 
-Our kernels also check MokListXRT for revocations for kexec.
+By embedding the revoked keys in the kernel config as:
+```
+CONFIG_SYSTEM_REVOCATION_KEYS="debian/canonical-revoked-certs.pem"
+CONFIG_SYSTEM_TRUSTED_KEYS="debian/canonical-certs.pem"
+```
+we protect against `kexec` of revoked kernels and avoid mirroring the keys into the dbx.
 
 *******************************************************************************
 ### Does your shim load any loaders that support loading unsigned kernels (e.g. certain GRUB2 configurations)?
